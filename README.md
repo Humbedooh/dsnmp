@@ -57,5 +57,6 @@ If you do this, please leave the `hosts` record as a blank hash:
  For example: `#snmp server1 disks`.
  
  To get an overall status of the latest run of checks, type: `#snmpstatus`
+ 
  To get list of all checks currently in use, type: `#snmpconfig`
  
