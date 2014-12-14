@@ -2,6 +2,7 @@ dsnmp
 =====
 
 Dell (OpenManage) SNMP monitoring system with HipChat, PagerDuty and email integration.
+Also works with generic UNIX net-snmp daemons for more standard checks.
 
 Originally created for the Apache Software Foundation. 
 As such, there may still be ASF-centric checks and logic in the code that you may need to change to suit your own needs.
