@@ -49,7 +49,7 @@ If you do this, please leave the `hosts` record as a blank hash:
  - `status`:      Displays the combined status of the entire machine. Alerts if status is not okay. Does not explain why.
  - `cooling`:     Displays the combined status of the cooling devices in the machine. Alerts if devices are not working.
  - `battery`:     Displays the combined battery status of the machine. Alerts if any batteries are not working.
- - `temperature`: Displays the overall temperature status.
+ - `temperature`: Displays the overall temperature status. Triggers an alert if temperatures are outside acceptable range (71.4 C for ambient, intake & exhaust, 85.6 C for cpu, 52.4 C for drives)
 
 
 # HipChat commands ##
