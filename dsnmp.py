@@ -667,8 +667,6 @@ while True:
                 for line in js['messages']:
                     hash256 = line['date'] + hashlib.sha256(line['message'].encode("ascii","ignore")).hexdigest()
                     history[hash256] = True
-
-            js = json.loads(urllib.urlopen("https://api.hipchat.com/v1/rooms/history?auth_token=%s&room_id=%s&date=recent" % (hipchat_token, room)).read())
             for line in js['messages']:
                 hash256 = line['date'] + hashlib.sha256(line['message'].encode("ascii","ignore")).hexdigest()
                 if not hash256 in history:
