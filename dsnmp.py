@@ -714,10 +714,16 @@ while True:
                             sendNotice(room, hipchat_token, "SNMP has detected issues with: %s. Click <a href='%s/%s'>Here</a> for details."  % (", ".join(snmp_status[group]), http_url, group), 'red')
                         else:
                             sendNotice(room, hipchat_token, "SNMP has not detected any recent issues.", 'green')
+                    if line['message'] == "#snmpconf":
+                        output = ""
+                        for server in runall[group]['hosts']:
+                            output += "<br/>\n%s: %s" % (server, ", ".join(runall[group]['hosts'][server]['checks']))
+                        sendNotice(room, hipchat_token, "SNMP is currently running the following checks: %s" % output, 'green')
+
         except:
             print("Could not get hipchat data for %s!" % group)
-    time.sleep(5)
-    if (a % 180) == 5:
+    time.sleep(6)
+    if (a % 150) == 5:
         for group in runall:
             thread = Thread(target = run_all, args = [group])
             thread.start()
