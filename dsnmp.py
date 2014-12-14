@@ -11,6 +11,7 @@ json_data = "./settings.json" # Path to the global group settings
 suffix = ".foo.org" # If set, append this to all hipchat host queries for fast access
 ml_from = 'DSNMP Check <no-reply@example.com>' # Who to send emails from
 ml_addr = 'no-reply@example.com' # Same as above, short format
+vital_partitions = [ "/", "/x1.*" ] # Partitions that need to be below 75% space used, regex'ed
 
 import os, sys, time, re, subprocess, urllib, json, hashlib, requests, time, random
 from datetime import datetime
@@ -185,8 +186,9 @@ def linux_disk_space_used(arr, server, community):
             output += "%s: %s%% used (alert level = 75%%).<br/>" % (el[1], str(used))
             overuse = True
             # TODO: Make this configurable
-            if re.search(r"/x1", el[1]) or el[1] == "/":
-                woveruse = True
+            for path in vital_partitions:
+                if re.search(r"^%s$" % path, el[1]) or el[1] == path:
+                    woveruse = True
     if not overuse:
         output += "No partitions using >= 75%% disk space (largest is %s with %s%%)" % (lv, lu)
     return output, woveruse
