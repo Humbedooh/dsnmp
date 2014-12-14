@@ -17,7 +17,7 @@ As such, there may still be ASF-centric checks and logic in the code that you ma
  - `uptime`:      Shows uptime. Does not trigger an alert
  - `memory`:      Shows the total amount of memory installed. Does not trigger an alert, unless faulty memory is detected (Dell specific)
  - `cores`:       Lists the number of CPU cores found on the system. Does not trigger alerts
- - `spac`e:       Lists the available partitions on the disk if >= 75% space used. Triggers an alert if >=75% space used on a partition.
+ - `space`:       Lists the available partitions on the disk if >= 75% space used. Triggers an alert if >=75% space used on a partition.
  
  
  ### The following Dell specific checks are valid:
