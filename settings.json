@@ -1,0 +1,25 @@
+{
+    "ourstuff": {
+        "hosts": {
+          "server1.example.org": {
+          "checks": ["space", "memfree"],
+          "community": "secret"
+          },
+          "server2.example.org": {
+              "checks": ["space", "memfree", "load", "psu", "memory", "disks"],
+              "community": "secret"
+          }
+        },
+        "contact": {
+            "email": ["foo@example.org"],
+            "pd": "pagerduty-thingy@foo.pagerduty.com",
+            "hipchat": {
+                "token": "Add your token here, or use '<foo.txt' to read it from foo.txt",
+                "room": "room id goes here"
+            }
+        },
+        "settings": {
+            "alertdial": 2
+        }
+    }
+}
