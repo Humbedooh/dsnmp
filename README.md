@@ -26,7 +26,7 @@ If you do this, please leave the `hosts` record as a blank hash:
 
 ## Checks ##
 
-### The following standard UNIX checks are valid:
+ ### The following standard UNIX checks are valid:
 
  - `load`:        5, 10, 15 min load averages (alerts if 15 min is above what N cores can provide for. Triggers after 45 min of this)
  - `cpuidle`:     Shows how much cpu is idle at the time. Does not trigger alerts
@@ -51,7 +51,7 @@ If you do this, please leave the `hosts` record as a blank hash:
  - `temperature`: Displays the overall temperature status.
 
 
- # HipChat commands ##
+# HipChat commands ##
  To trigger a check via HipChat (assuming the daemon is running), use the following syntax:
  `#snmp $host $check`.
  For example: `#snmp server1 disks`.
