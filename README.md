@@ -6,6 +6,13 @@ Dell (OpenManage) SNMP monitoring system with HipChat, PagerDuty and email integ
 Originally created for the Apache Software Foundation. 
 As such, there may still be ASF-centric checks and logic in the code that you may need to change to suit your own needs.
 
+## Getting started ##
+- Download the script and sample configuration
+- Set up a HTTP server of your choice on the box
+- Set the config vars in dsnmp.py to match your system and HTTP server
+- Fix settings.json to match your hardware
+- Run `nohup python dsnmp.py &` and have coffee!
+
 
 ## Checks ##
 
@@ -38,4 +45,7 @@ As such, there may still be ASF-centric checks and logic in the code that you ma
  To trigger a check via HipChat (assuming the daemon is running), use the following syntax:
  `#snmp $host $check`.
  For example: `#snmp server1 disks`.
+ 
+ To get an overall status of the latest run of checks, type: `#snmpstatus`
+ To get list of all checks currently in use, type: `#snmpconfig`
  
