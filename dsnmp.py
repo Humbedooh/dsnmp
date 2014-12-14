@@ -362,11 +362,11 @@ def analyze_perc_disks(arr, server, community):
             output += "<font color='#%s'><b>%s (%u):</b> %s</font><br/>" % (color, status[s], len(ds[s]), ", ".join(get_perc_disk_info(x, server, community) for x in ds[s]))
     return (output, issues)
 
-def sendNotice(room, hipchat_token, msg, color = 'yellow'):
+def sendNotice(room, hipchat_token_string, msg, color = 'yellow'):
     headers = {'User-Agent': 'SNMP2HipChat/0.99'}
     payload = {
         'room_id': room,
-        'auth_token': hipchat_token,
+        'auth_token': hipchat_token_string,
         'from': "SNMP2HipChat",
         'message_format': 'html',
         'notify': '0',
