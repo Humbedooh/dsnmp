@@ -27,7 +27,7 @@ If you do this, please leave the `hosts` record as a blank hash:
 
 ## Checks ##
 
- ### The following standard UNIX checks are valid:
+### The following standard UNIX checks are valid:
 
  - `load`:        5, 10, 15 min load averages (alerts if 15 min is above what N cores can provide for. Triggers after 45 min of this)
  - `cpuidle`:     Shows how much cpu is idle at the time. Does not trigger alerts
@@ -38,7 +38,7 @@ If you do this, please leave the `hosts` record as a blank hash:
  - `space`:       Lists the available partitions on the disk if >= 75% space used. Triggers an alert if >=75% space used on a partition.
  
  
- ### The following Dell specific checks are valid:
+### The following Dell specific checks are valid:
  
  - `perc`:        Displays the status of the PERC RAID controller and its volumes. Alerts if a volume is degraded or otherwise compromised
  - `array`:       Displays the status of the OS arrays. Alerts if a disk is in a wrong state (degraded, faulted, offline etc)
