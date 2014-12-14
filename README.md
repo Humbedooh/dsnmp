@@ -13,6 +13,16 @@ As such, there may still be ASF-centric checks and logic in the code that you ma
 - Fix settings.json to match your hardware
 - Run `nohup python dsnmp.py &` and have coffee!
 
+## Extending to dynamically added hosts ##
+If you don't like restarting the script to add new hosts/checks,
+you can specify a `hostsfile` option in the json, pointing to an external json file on a HTTP server.
+If you do this, please leave the `hosts` record as a blank hash:
+~~~
+   ...,
+   "hosts": {},
+   "hostsfile": "https://www.example.org/hosts.json",
+   ...
+~~~
 
 ## Checks ##
 
