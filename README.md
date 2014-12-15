@@ -30,6 +30,7 @@ If you do this, please leave the `hosts` record as a blank hash:
 ~~~
 
 ## Checks ##
+Checks are run every 15 minutes. If an issue is found, alerts will be provided through HipChat, PagerDuty and email on a regular basis (HipChat every 4 hours or at 8 PM if no issues, PagerDuty when issues are detected (depending on what the alert dial is set to, email once a day).
 
 ### The following standard UNIX checks are valid:
 
@@ -55,6 +56,9 @@ If you do this, please leave the `hosts` record as a blank hash:
  - `battery`:     Displays the combined battery status of the machine. Alerts if any batteries are not working.
  - `temperature`: Displays the overall temperature status. Triggers an alert if temperatures are outside acceptable range (71.4 C for ambient, intake & exhaust, 85.6 C for cpu, 52.4 C for drives)
 
+
+## Alert dial
+To prevent overzealous reporting, the `alertdial` setting in settings.json controls when alerts are sent out. For each increment of 1 of the dial, dsnmp will wait one more turn (15 min) before alerting, or put differently; if the same error has been detected more than $alertdial times, the alert will be triggered. The default setting for this is 2, meaning an alert will trigger if the issue persists for 30-45 minutes.
 
 # HipChat commands ##
  To trigger a check via HipChat (assuming the daemon is running), use the following syntax:
