@@ -11,7 +11,7 @@ As such, there may still be ASF-centric checks and logic in the code that you ma
 
 ## Requirements
 - Python 2.7 or newer (will work with 2.6, barely)
-- Access to SNMP servers
+- Access to SNMP servers via SNMP v2c
 - snmp tools installed (snmpget + snmpwalk)
 
 ## Getting started ##
