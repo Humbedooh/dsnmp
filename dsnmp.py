@@ -197,7 +197,7 @@ def linux_disk_space_used(arr, server, community):
     lu = 0
     for el in arr:
         used = snmpget(server, community, "%s.%u" % (linux_disk_pct, el[0]))
-        if used > lu:
+        if int(used) > lu:
             lv = el[1]
             lu = used
         if int(used) >= 75:
