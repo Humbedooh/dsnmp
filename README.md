@@ -1,18 +1,18 @@
-dsnmp
+dSNMP - Dell SNMP Montiroing System
 =====
 
-Dell (OpenManage) SNMP monitoring system with HipChat, PagerDuty and email integration.
-Also works with generic UNIX net-snmp daemons for more standard checks.
+This is a Dell (OpenManage) SNMP monitoring system with HipChat, PagerDuty and email integration.
+It also works with generic UNIX net-snmp daemons for more standard checks such as space, free mem and load averages.
 
-Tested with Dell PowerEdge R410, R515 and R720 with PERC RAID controllers.
+Tested with Dell PowerEdge R410, R515 and R720 with PERC RAID controllers, as well as Linux and FreeBSD VMs with net-snmp.
 
-Originally created for the Apache Software Foundation. 
+Originally created for the Apache Software Foundation by Quokka IvS. 
 As such, there may still be ASF-centric checks and logic in the code that you may need to change to suit your own needs.
 
 
 ## Getting started ##
 - Download the script and sample configuration
-- Set up a HTTP server of your choice on the box and:
+- Either set up a HTTP server of your choice on the box and:
    - Set the config vars in dsnmp.py to match your system and HTTP server
 - OR, use `--port 8080` or similar as a CLI argument for the dsnmp script to start a HTTP server.
 - Fix settings.json to match your hardware
