@@ -12,7 +12,10 @@ suffix = ".foo.org" # If set, append this to all hipchat host queries for fast a
 ml_from = 'DSNMP Check <no-reply@example.com>' # Who to send emails from
 ml_addr = 'no-reply@example.com' # Same as above, short format
 vital_partitions = [ "/", "/x1.*" ] # Partitions that need to be below 75% space used, regex'ed
+http_port = None # Set to hard-code a HTTP port to serve from instead of using an external HTTP server
 
+
+# Basic imports
 import os, sys, time, re, subprocess, urllib, json, hashlib, requests, time, random
 from datetime import datetime
 
@@ -24,6 +27,17 @@ from email.mime.multipart import MIMEMultipart
 # Threading
 from threading import Thread
 
+# HTTP Lib + argsparse
+from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
+import argparse
+
+# Parse args
+parser = argparse.ArgumentParser(description='Command line options.')
+parser.add_argument('--port', dest='port', type=int, nargs=1,
+                   help='If defined, launch a HTTP server at this port to serve up static SNMP reports instead of compiling to files on disk')
+
+args = parser.parse_args()
+served_ourselves = False
 
 # Sendmail function
 def sendMail(to, subject, text, html):
@@ -185,7 +199,6 @@ def linux_disk_space_used(arr, server, community):
         if int(used) >= 75:
             output += "%s: %s%% used (alert level = 75%%).<br/>" % (el[1], str(used))
             overuse = True
-            # TODO: Make this configurable
             for path in vital_partitions:
                 if re.search(r"^%s$" % path, el[1]) or el[1] == path:
                     woveruse = True
@@ -365,11 +378,11 @@ def analyze_perc_disks(arr, server, community):
             output += "<font color='#%s'><b>%s (%u):</b> %s</font><br/>" % (color, status[s], len(ds[s]), ", ".join(get_perc_disk_info(x, server, community) for x in ds[s]))
     return (output, issues)
 
-def sendNotice(room, hipchat_token_string, msg, color = 'yellow'):
+def sendNotice(room, hipchat_tokenthing, msg, color = 'yellow'):
     headers = {'User-Agent': 'SNMP2HipChat/0.99'}
     payload = {
         'room_id': room,
-        'auth_token': hipchat_token_string,
+        'auth_token': hipchat_tokenthing,
         'from': "SNMP2HipChat",
         'message_format': 'html',
         'notify': '0',
@@ -518,7 +531,8 @@ snmp_status = {}
 snmp_daily_email = {}
 snmp_hourly_hipchat = {}
 snmp_hourly_pd = {}
-
+snmp_reading = []
+snmp_pages = {}
 
 
 # Schedule
@@ -540,7 +554,7 @@ for group in runall:
     snmp_daily_email[group] = ""
     snmp_hourly_hipchat[group] = "",
     snmp_hourly_pd[group] = ""
-
+    snmp_pages[group] = {}
 
 
 # 15 minute check:
@@ -548,6 +562,7 @@ def run_all(what):
     gissues = 0
     goutput = ""
     gtoutput = ""
+    snmp_reading.append(what)
     snmp_status[what] = []
     if 'hostsfile' in runall[what]:
         try:
@@ -607,18 +622,25 @@ def run_all(what):
                     sissues = True
                     gissues += 1
                     sendMail(runall[what]['contact']['pd'], "SNMP detected issues with %s on %s: Could not contact SNMPD" % (el, server), "SNMP detected issues with %s on %s: Could not contact SNMPD" % (el, server), "SNMP detected issues with %s on %s: Could not contact SNMPD" % (el, server))
-        with open("%s/%s/%s.html" % (http_dir, what, server), "w") as f:
-            if sissues:
-                f.write("<h3><font color='#995500'>Issues detected!! (see details below)</font></h3>")
-                snmp_status[what].append(server)
-            f.write(soutput)
-            f.close()
+        if not served_ourselves:
+            with open("%s/%s/%s.html" % (http_dir, what, server), "w") as f:
+                if sissues:
+                    f.write("<h3><font color='#995500'>Issues detected!! (see details below)</font></h3>")
+                    snmp_status[what].append(server)
+                f.write(soutput)
+                f.close()
+        snmp_pages[what][server] = soutput
+        
         goutput += "<a href='%s/%s/%s.html'>%s</a>: %s<br>" % (http_url, what, server, server, "<font color='#920'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % ", ".join(whatissues) if sissues else "<font color='#008'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed at %s)") % (scans, time.strftime("%Y-%m-%d %H:%M"))
         gtoutput += "- %s: %s\n" % (server, "Issues detected in: %s" % ", ".join(whatissues) if sissues else "No issues detected")
         
-    with open("%s/%s/index.html" % (http_dir, what), "w") as f:
-        f.write(goutput)
-        f.close()
+    if not served_ourselves:
+        with open("%s/%s/index.html" % (http_dir, what), "w") as f:
+            f.write(goutput)
+            f.close()
+            
+    snmp_pages[what]['index'] = goutput
+    
     if runall[what]['contact']:
         if 'email' in runall[what]['contact']:
             dt = time.strftime("%y-%m-%d")
@@ -653,11 +675,56 @@ def run_all(what):
                 if datetime.now().hour == 20 or gissues > 0:
                     session = requests.Session()
                     session.post('https://api.hipchat.com/v1/rooms/message',headers=headers,data=payload)
+    snmp_reading.remove(what)
+    
 
-a = 0
+# Spawn our own HTTP server?
+class dsnmpHTTPHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type',"text/html")
+        self.send_header('Connection',"close")
+        self.end_headers()
+        data = ""
+        m = re.match(r"^/([^/]*)/?([^/]*?)(\.html)?$", self.path)
+        group = None
+        page = None
+        if m:
+            group = m.group(1)
+            page = m.group(2)
+        if group and group in runall:
+            if not page or page == "":
+                page = "index"
+            if page and page in snmp_pages[group]:
+                self.wfile.write(snmp_pages[group][page])
+            else:
+                self.wfile.write("404 Not found")
+        else:
+            self.wfile.write("404 Not found!")
 
+
+def start_server(portno):
+    global http_url
+    server = HTTPServer(('', portno), dsnmpHTTPHandler)
+    print ("Started HTTP server on port %u." % portno)
+    if not re.search(r"[a-z]/", http_url):
+        http_url += ":%u" % portno
+    served_ourselves = True
+    try:
+        server.serve_forever()
+    except KeyboardInterrupt:
+        print "Ctrl+C received, shutting down HTTP Server"
+        server.socket.close()
 
 # Start doing things
+
+if len(args.port) == 1 or (http_port and http_port > 0):
+    http_port = args.port[0] if len(args.port) > 0 else http_port
+    thread = Thread(target = start_server, args = [http_port])
+    thread.start()
+
+# Our lil' timer for everything.
+a = 0
 
 while True:
     a += 1
@@ -676,40 +743,43 @@ while True:
                     history[hash256] = True
                     match = re.search(r"#snmp (\S+) (\S+)(.*)", line['message'])
                     if match:
-                        host = match.group(1)
-                        typ = match.group(2)
-                        com = match.group(3)
-                        if len(com) > 1:
-                            community = com.strip()
+                        if len(snmp_reading) > 0:
+                            sendNotice(room, hipchat_token, "Sorry, I'm currently running the 15 minute check. Due to the non-thread-safe nature of the UDP checks, I cannot return any SNMP data currently. Please retry in a minute.", 'yellow')
                         else:
-                            community = "public"
-                            if "%s%s" % (host, suffix) in runall[group]['hosts']:
-                                community = runall[group]['hosts']["%s%s" % (host, suffix)]['community']
-                        if typ in mibarray:
-                            arr = None
-                            try:
-                                output = "<b>SNMP Response:</b><br/>\n"
-                                gi = False
-                                if mibarray[typ].__class__.__name__ == "list":
-                                    arr = snmpwalk("%s%s" % (host, suffix), community, mibarray[typ][0])
-                                    response, issues = mibarray[typ][1](arr, "%s%s" % (host, suffix), community)
-                                    output += response
-                                    if issues:
-                                        gi = True
-                                        output = "<i><font color='#994400'>Issues detected! (see details below):</font></i><br/>" + output
-                                else:                            
-                                    arr = snmpwalk("%s%s" % (host, suffix), community, mibarray[typ])
-                                    out = []
-                                    for item in arr:
-                                        out.append("%s = %s" % (item[0], item[1]))
-                                    output += ", ".join(out)
-                                    
-                                sendNotice(room, hipchat_token, output, 'red' if gi else 'green')
-                            except Exception as err:
-                                print(err)
-                                sendNotice(room, hipchat_token, 'Got no response from SNMP server', 'red')
-                        else:
-                            sendNotice(room, hipchat_token, "Could not fetch SNMP data :(", 'red')
+                            host = match.group(1)
+                            typ = match.group(2)
+                            com = match.group(3)
+                            if len(com) > 1:
+                                community = com.strip()
+                            else:
+                                community = "public"
+                                if "%s%s" % (host, suffix) in runall[group]['hosts']:
+                                    community = runall[group]['hosts']["%s%s" % (host, suffix)]['community']
+                            if typ in mibarray:
+                                arr = None
+                                try:
+                                    output = "<b>SNMP Response:</b><br/>\n"
+                                    gi = False
+                                    if mibarray[typ].__class__.__name__ == "list":
+                                        arr = snmpwalk("%s%s" % (host, suffix), community, mibarray[typ][0])
+                                        response, issues = mibarray[typ][1](arr, "%s%s" % (host, suffix), community)
+                                        output += response
+                                        if issues:
+                                            gi = True
+                                            output = "<i><font color='#994400'>Issues detected! (see details below):</font></i><br/>" + output
+                                    else:                            
+                                        arr = snmpwalk("%s%s" % (host, suffix), community, mibarray[typ])
+                                        out = []
+                                        for item in arr:
+                                            out.append("%s = %s" % (item[0], item[1]))
+                                        output += ", ".join(out)
+                                        
+                                    sendNotice(room, hipchat_token, output, 'red' if gi else 'green')
+                                except Exception as err:
+                                    print(err)
+                                    sendNotice(room, hipchat_token, 'Got no response from SNMP server', 'red')
+                            else:
+                                sendNotice(room, hipchat_token, "Could not fetch SNMP data :(", 'red')
                     if line['message'] == "#snmpstatus":
                         if len(snmp_status[group]) > 0:
                             sendNotice(room, hipchat_token, "SNMP has detected issues with: %s. Click <a href='%s/%s'>Here</a> for details."  % (", ".join(snmp_status[group]), http_url, group), 'red')
@@ -720,9 +790,8 @@ while True:
                         for server in runall[group]['hosts']:
                             output += "<br/>\n%s: %s" % (server, ", ".join(runall[group]['hosts'][server]['checks']))
                         sendNotice(room, hipchat_token, "SNMP is currently running the following checks: %s" % output, 'green')
-
         except:
-            print("Could not get hipchat data for %s!" % group)
+            print("Could not get hipchat data for %s (using https://api.hipchat.com/v1/rooms/history?auth_token=%s&room_id=%s&date=recent" % (group, hipchat_token, room))
     time.sleep(6)
     if (a % 150) == 5:
         for group in runall:
