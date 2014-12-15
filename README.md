@@ -9,6 +9,10 @@ Tested with Dell PowerEdge R410, R515 and R720 with PERC RAID controllers, as we
 Originally created for the Apache Software Foundation by Quokka IvS. 
 As such, there may still be ASF-centric checks and logic in the code that you may need to change to suit your own needs.
 
+## Requirements
+- Python 2.7 or newer (will work with 2.6, barely)
+- Access to SNMP servers
+- snmp tools installed (snmpget + snmpwalk)
 
 ## Getting started ##
 - Download the script and sample configuration
