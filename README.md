@@ -4,8 +4,11 @@ dsnmp
 Dell (OpenManage) SNMP monitoring system with HipChat, PagerDuty and email integration.
 Also works with generic UNIX net-snmp daemons for more standard checks.
 
+Tested with Dell PowerEdge R410, R515 and R720 with PERC RAID controllers.
+
 Originally created for the Apache Software Foundation. 
 As such, there may still be ASF-centric checks and logic in the code that you may need to change to suit your own needs.
+
 
 ## Getting started ##
 - Download the script and sample configuration
