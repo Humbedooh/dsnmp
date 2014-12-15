@@ -1,4 +1,4 @@
-dSNMP - Dell SNMP Montiroing System
+dSNMP - Dell SNMP monitoring system
 =====
 
 This is a Dell (OpenManage) SNMP monitoring system with HipChat, PagerDuty and email integration.
