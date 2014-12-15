@@ -38,6 +38,7 @@ parser.add_argument('--port', dest='port', type=int, nargs=1,
 
 args = parser.parse_args()
 served_ourselves = False
+just_started = True
 
 # Sendmail function
 def sendMail(to, subject, text, html):
@@ -119,6 +120,9 @@ dell_extra_temp = '1.3.6.1.4.1.674.10892.1.200.10.1.24.1'
 
 dell_extra_temp_vals = "iso.3.6.1.4.1.674.10892.1.700.20.1.6.1"
 dell_extra_temp_names = "iso.3.6.1.4.1.674.10892.1.700.20.1.8.1"
+
+dell_log_dates = "iso.3.6.1.4.1.674.10892.1.300.40.1.8.1"
+dell_log_entries = "iso.3.6.1.4.1.674.10892.1.300.40.1.5.1"
 
 
 # Dell standard statuses
@@ -503,6 +507,19 @@ def analyze_prod(arr, server, community):
         pass
     return (prod if (prod  and prod != "") else "Unknown (virtual?) machine, running %s") % os, False
     
+def analyze_dell_logs(arr, server, community):
+    lines = []
+    for i in range(1, 9):
+        try:
+            line = snmpget(server, community, "%s.%u" % (dell_log_entries, i))
+            date = snmpget(server, community, "%s.%u" % (dell_log_dates, i))
+            if line and date and line != "" and date != "":
+                rdate = datetime.strptime(date, "%Y%m%d%H%M%S.000000-000")
+                lines.append("%s :: %s" % (rdate.strftime("%a, %d %b, %Y %H:%M:%S"), line))
+        except:
+            pass
+    return "<b>Latest log entries:</b><br/>\n%s" % ("<br>\n".join(lines)), False
+
 
 # Define MIB actions
 mibarray = {
@@ -521,7 +538,8 @@ mibarray = {
     'status': [dell_overall_status, analyze_dell_overall_status],
     'temperature': [dell_extra_temp, analyze_dell_temp],
     'cooling': [dell_extra_coolin, analyze_dell_status],
-    'battery': [dell_extra_battery, analyze_dell_status]
+    'battery': [dell_extra_battery, analyze_dell_status],
+    'log': [linux_os, analyze_dell_logs]
 }
 
 
@@ -631,7 +649,7 @@ def run_all(what):
                 f.close()
         snmp_pages[what][server] = soutput
         
-        goutput += "<a href='%s/%s/%s.html'>%s</a>: %s<br>" % (http_url, what, server, server, "<font color='#920'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % ", ".join(whatissues) if sissues else "<font color='#008'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed at %s)") % (scans, time.strftime("%Y-%m-%d %H:%M"))
+        goutput += "<a href='%s/%s/%s.html'>%s</a>: %s<br>" % (http_url, what, server, server, ("<font color='#920'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % (", ".join(whatissues))) if sissues else ("<font color='#008'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed at %s)") % (scans, time.strftime("%Y-%m-%d %H:%M")))
         gtoutput += "- %s: %s\n" % (server, "Issues detected in: %s" % ", ".join(whatissues) if sissues else "No issues detected")
         
     if not served_ourselves:
@@ -645,7 +663,7 @@ def run_all(what):
         if 'email' in runall[what]['contact']:
             dt = time.strftime("%y-%m-%d")
             print("Constructing email for %s" % dt)
-            if dt != snmp_daily_email[what]:
+            if dt != snmp_daily_email[what] and just_started == False:
                 snmp_daily_email[what] = dt
                 for email in runall[what]['contact']['email']:
                     subject = "Daily SNMP Check: %s" % ("ISSUES DETECTED (%u)" % gissues if gissues > 0 else "No issues detected")
@@ -657,6 +675,7 @@ def run_all(what):
                     text += "\nFor more details, visit: %s/%s" % (http_url, what)
                     html += "<br/>\nFor more details, visit: <a href='%s/%s/'>%s/%s/</a>." % (http_url, what, http_url, what)
                     sendMail(email, subject, text, html)
+            snmp_daily_email[what] = dt
         if 'hipchat' in runall[what]['contact']:
             h = datetime.now().hour / 4
             print("Constructing hipchat for %s" % h)
@@ -717,9 +736,9 @@ def start_server(portno):
         server.socket.close()
 
 # Start doing things
-
-if len(args.port) == 1 or (http_port and http_port > 0):
-    http_port = args.port[0] if len(args.port) > 0 else http_port
+print("Starting dSNMP")
+if (args.port and len(args.port)) == 1 or (http_port and http_port > 0):
+    http_port = args.port[0] if (args.port and len(args.port)) > 0 else http_port
     thread = Thread(target = start_server, args = [http_port])
     thread.start()
 
@@ -797,4 +816,6 @@ while True:
         for group in runall:
             thread = Thread(target = run_all, args = [group])
             thread.start()
+    if a > 100:
+        just_started = False
     
