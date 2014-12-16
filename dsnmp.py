@@ -714,12 +714,12 @@ def run_all(what):
                 for email in runall[what]['contact']['email']:
                     subject = "Daily SNMP Check: %s" % ("ISSUES DETECTED (%u)" % gissues if gissues > 0 else "No issues detected")
                     text = "Hello, this is the daily SNMP check. Current SNMP status is:\n - No issues have been detected for today, hoorah!\n\nDetails:\n\n" + gtoutput
-                    html = "Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>No issues have been detected today, awesome!</i></b>.<br/><br/><b>Details:</b><br/>" + goutput
+                    html = "Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>No issues have been detected today, awesome!</i></b>.<br/><br/><b>Details:</b><br/><table>%s</table>" % goutput
                     if gissues > 0:
                         text = "Hello, this is the daily SNMP check. Current SNMP status is:\n - ISSUES DETECTED\n\nDetails:\n\n" + gtoutput
-                        html = "Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>ISSUES DETECTED</i></b>.<br/><br/><b>Details:</b><br/>" + goutput
-                    text += "\nFor more details, visit: %s/%s" % (http_url, what)
-                    html += "<br/>\nFor more details, visit: <a href='%s/%s/'>%s/%s/</a>." % (http_url, what, http_url, what)
+                        html = "Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>ISSUES DETECTED</i></b>.<br/><br/><b>Details:</b><br/><table>%s</table>" % goutput
+                    text += "\nFor more details, visit: %s/%s.\nPowered by dSNMP - https://github.com/Humbedooh/dsnmp" % (http_url, what)
+                    html += "<br/>\nFor more details, visit: <a href='%s/%s/'>%s/%s/</a>.<br/><small>Powered by <a href='https://github.com/Humbedooh/dsnmp'>dSNMP</a>.</small>" % (http_url, what, http_url, what)
                     sendMail(email, subject, text, html)
             snmp_daily_email[what] = dt
         if 'hipchat' in runall[what]['contact']:
