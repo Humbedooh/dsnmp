@@ -40,6 +40,40 @@ args = parser.parse_args()
 served_ourselves = False
 just_started = True
 
+## HTML Output template
+html_output_template = """
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+  <head> 
+    <style type="text/css">
+     tr:nth-of-type(odd) td {
+        background-color: #DDE;
+     }
+    th {
+        background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 5%1%,#f6f6f6 100%%) !important;
+   }
+    </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <body>
+        <h2>Overall status for %s:</h2>
+        <table style="font-size: 11pt; padding: 3px !important;">
+          <thead>
+            <tr style="background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 51%%,#f6f6f6 100%%);">
+              <th>Host</th>
+              <th>Status</th>
+              <th>Last checked</th>
+            </tr>
+          </thead>
+          <tbody>
+            %s
+          </tbody>
+        </table>
+        <p><small><i>Powered by <a href="https://github.com/Humbedooh/dsnmp" rel="nofollow">dSNMP</a>.</i></small></p>
+    </body>
+</html>
+"""
+
 # Sendmail function
 def sendMail(to, subject, text, html):
     msg = MIMEMultipart('alternative')
@@ -577,6 +611,8 @@ for group in runall:
 
 # 15 minute check:
 def run_all(what):
+    print("Running checks for %s" % what)
+    now = time.time()
     gissues = 0
     goutput = ""
     gtoutput = ""
@@ -649,7 +685,17 @@ def run_all(what):
                 f.close()
         snmp_pages[what][server] = soutput
         
-        goutput += "<a href='%s/%s/%s.html'>%s</a>: %s<br>" % (http_url, what, server, server, ("<font color='#920'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % (", ".join(whatissues))) if sissues else ("<font color='#008'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed at %s)") % (scans, time.strftime("%Y-%m-%d %H:%M")))
+        goutput += "<tr><td><a href='%s/%s/%s.html'>%s</a></td><td>%s</td><td>%s</td></tr>" % (
+            http_url,
+            what,
+            server,
+            server,
+            (
+                    ("<font color='#920'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % ", ".join(whatissues)) if sissues else
+                    ("<font color='#008'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed)" % scans)
+            ),
+            time.strftime("%Y-%m-%d %H:%M")
+        )
         gtoutput += "- %s: %s\n" % (server, "Issues detected in: %s" % ", ".join(whatissues) if sissues else "No issues detected")
         
     if not served_ourselves:
@@ -657,7 +703,7 @@ def run_all(what):
             f.write(goutput)
             f.close()
             
-    snmp_pages[what]['index'] = goutput
+    snmp_pages[what]['index'] = html_output_template % (what, goutput)
     
     if runall[what]['contact']:
         if 'email' in runall[what]['contact']:
@@ -689,12 +735,13 @@ def run_all(what):
                     'message_format': 'html',
                     'notify': '0',
                     'color': 'red' if gissues > 0 else 'green',
-                    'message': "SNMP Update: %s" % ("Issues detected with %s" % ", ".join(snmp_status[what])) if gissues > 0 else "Daily eight o'clock status: No issues detected!"
+                    'message': "SNMP Update: %s. See the <a href='%s/%s/'>status page</a> for more details." % ("Issues detected with %s" % ", ".join(snmp_status[what]), http_url, what) if gissues > 0 else "Daily eight o'clock status: No issues detected"
                 }
                 if datetime.now().hour == 20 or gissues > 0:
                     session = requests.Session()
                     session.post('https://api.hipchat.com/v1/rooms/message',headers=headers,data=payload)
     snmp_reading.remove(what)
+    print("Done with %s in %u seconds" % (what, time.time() - now))
     
 
 # Spawn our own HTTP server?
@@ -812,7 +859,7 @@ while True:
         except:
             print("Could not get hipchat data for %s (using https://api.hipchat.com/v1/rooms/history?auth_token=%s&room_id=%s&date=recent" % (group, hipchat_token, room))
     time.sleep(6)
-    if (a % 150) == 5:
+    if (a % 150) == 1:
         for group in runall:
             thread = Thread(target = run_all, args = [group])
             thread.start()
