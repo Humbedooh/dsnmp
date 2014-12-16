@@ -67,8 +67,10 @@ To prevent overzealous reporting, the `alertdial` setting in settings.json contr
 
 # HipChat commands ##
  To trigger a check via HipChat (assuming the daemon is running), use the following syntax:
- `#snmp $host $check`.
- For example: `#snmp server1 disks`.
+ `#snmp $host $check [$community]`.
+ For example: `#snmp server1 disks`. 
+ 
+ If the specific host is in your settings.json file (or in the remote hosts file), you do not need to specify an SNMP community, but if it's not, then you will need to specify it as the third and last arg to the command. The `suffix` variable inside snmp.py is automatically appended to the host name, thus `server1` becomes `server1.example.com` unless you change the suffix (you can leave it blank).
  
  To get an overall status of the latest run of checks, type: `#snmpstatus`
  
