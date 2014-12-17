@@ -82,7 +82,7 @@ def sendMail(to, subject, text, html):
     msg['To'] = to
     
     part1 = MIMEText(text, 'plain')
-    part2 = MIMEText(html, 'html')
+    part2 = MIMEText(html, 'html', 'UTF-8')
     msg.attach(part1)
     msg.attach(part2)
     s = smtplib.SMTP('localhost')
@@ -357,6 +357,32 @@ def analyze_dell_disks(arr, server, community):
             output += "<b>%s:</b> %s<br/>" % (status[s], ", ".join((get_dell_disk_info(x, server, community) if (s != 3 and s!= 1 and s != 13) else ("#" + str(x))) for x in ds[s]))
     return (output, issues)
 
+def analyze_disk_info(arr, server, community):
+    status = {
+        0: 'Unknown',
+        1: 'Ready (not assigned)',
+        2: 'FAILED',
+        3: 'Online and assigned',
+        4: 'OFFLINE',
+        6: 'DEGRADED',
+        7: 'Resilvering',
+        11: 'REMOVED',
+        13: 'Online (Passthrough)',
+        15: 'Resynching',
+        24: 'Rebuilding',
+        25: 'No media',
+        26: 'Formatting',
+        28: 'Diagnostics running',
+        35: 'Initializing',
+        38: 'Resynching Paused',
+        52: 'Permanently Degraded',
+        54: 'Degraded Redundancy'
+    }
+    output = "%u disks in total<br/>\n" % len(arr)
+    for el in arr:
+        output += "<b>%s:</b> %s<br/>" % (status[int(el[1])], get_dell_disk_info(el[0], server, community))
+    return (output, False)
+
 def analyze_perc_volumes(arr, server, community):
     status = {
         0: 'Unknown',
@@ -573,7 +599,8 @@ mibarray = {
     'temperature': [dell_extra_temp, analyze_dell_temp],
     'cooling': [dell_extra_coolin, analyze_dell_status],
     'battery': [dell_extra_battery, analyze_dell_status],
-    'log': [linux_os, analyze_dell_logs]
+    'log': [linux_os, analyze_dell_logs],
+    'diskinfo': [dell_disk_status, analyze_disk_info]
 }
 
 
