@@ -35,10 +35,13 @@ import argparse
 parser = argparse.ArgumentParser(description='Command line options.')
 parser.add_argument('--port', dest='port', type=int, nargs=1,
                    help='If defined, launch a HTTP server at this port to serve up static SNMP reports instead of compiling to files on disk')
+parser.add_argument('--dry-run', dest='dry', action='store_true',
+                   help='If set, dSNMP will not warn via email, hipchat or pd. used for testing checks.')
 
 args = parser.parse_args()
 served_ourselves = False
 just_started = True
+dry_run = False
 
 ## HTML Output template
 html_output_template = """
@@ -47,12 +50,26 @@ html_output_template = """
 <html xmlns="http://www.w3.org/1999/xhtml"> 
   <head> 
     <style type="text/css">
+    body {
+        font: 13px/1.5 Helvetica, Arial, 'Liberation Sans', FreeSans, sans-serif;
+    }
      tr:nth-of-type(odd) td {
-        background-color: #DDE;
+        background-color: #DDDDE6;
      }
     th {
         background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 5%1%,#f6f6f6 100%%) !important;
    }
+   td {
+    padding: 4px;
+   }
+    table {
+    border-collapse: collapse;
+    }
+    
+    table, th, td {
+        border: 1px solid black;
+    }
+
     </style>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <body>
@@ -63,6 +80,53 @@ html_output_template = """
               <th>Host</th>
               <th>Status</th>
               <th>Last checked</th>
+            </tr>
+          </thead>
+          <tbody>
+            %s
+          </tbody>
+        </table>
+        <p><small><i>Powered by <a href="https://github.com/Humbedooh/dsnmp" rel="nofollow">dSNMP</a>.</i></small></p>
+    </body>
+</html>
+"""
+
+# Individual report template
+html_report_template = """
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+               "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"> 
+<html xmlns="http://www.w3.org/1999/xhtml"> 
+  <head> 
+    <style type="text/css">
+    body {
+        font: 13px/1.5 Helvetica, Arial, 'Liberation Sans', FreeSans, sans-serif;
+    }
+     tr:nth-of-type(odd) td {
+        background-color: #DDDDE6;
+     }
+    th {
+        background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 5%1%,#f6f6f6 100%%) !important;
+   }
+   td {
+    padding: 5px;
+   }
+    table {
+    border-collapse: collapse;
+    }
+    
+    table, th, td {
+        border: 1px solid black;
+    }
+
+    </style>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <body>
+        %s
+        <table style="font-size: 11pt; padding: 3px !important;">
+          <thead>
+            <tr style="background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 51%%,#f6f6f6 100%%);">
+              <th>Check</th>
+              <th>Response</th>
             </tr>
           </thead>
           <tbody>
@@ -662,30 +726,31 @@ def run_all(what):
         scans = 0
         community = runall[what]['hosts'][server]['community']
         prod = None
-        
+        s_header = ""
         try:
             prod = snmpget(server, community, dell_product_name)
             if prod:
-                soutput += "<h2>%s (%s):</h2>" % (server, prod)
+                s_header = "<h2>%s (%s):</h2>" % (server, prod)
             else:
                 raise Exception("bah")
         except:
-            soutput += "<h2>%s (virtual machine):</h2>" % server
+            s_header = "<h2>%s (virtual machine):</h2>" % server
+        
         for el in runall[what]['hosts'][server]['checks']:
             dial = "%s-%s-%s" % (what, server, el)
             scans += 1
             try:
-                output = "<h3>%s check:</h3>" % el
+                output = "<tr><td><b>%s check:</b></td>" % el
                 if mibarray[el].__class__.__name__ == "list":
                     arr = snmpwalk(server, community, mibarray[el][0])
                     response, issues = mibarray[el][1](arr, server, community)
-                    output += response
+                    output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FDD;'" if issues else ""),response)
                     if issues:
                         sissues = True
                         gissues += 1
                         whatissues.append(el)
                         if (dial in alert_dials and alert_dials[dial] >= runall[what]['settings']['alertdial']) or runall[what]['settings']['alertdial'] <= 1:
-                            if 'pd' in runall[what]['contact']:
+                            if 'pd' in runall[what]['contact'] and not dry_run:
                                 sendMail(runall[what]['contact']['pd'], "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server))
                         alert_dials[dial] = 1 if not dial in alert_dials else alert_dials[dial] + 1
                     elif dial in alert_dials:
@@ -695,10 +760,10 @@ def run_all(what):
                     out = []
                     for item in arr:
                         out.append("%s = %s" % (item[0], item[1]))
-                    output += ", ".join(out)
+                    output += "<td><pre>%s</pre></td></tr>" % ", ".join(out)
                 soutput += output
             except:
-                if 'pd' in runall[what]['contact']:
+                if 'pd' in runall[what]['contact'] and not dry_run:
                     whatissues.append('snmp communication')
                     sissues = True
                     gissues += 1
@@ -708,9 +773,9 @@ def run_all(what):
                 if sissues:
                     f.write("<h3><font color='#995500'>Issues detected!! (see details below)</font></h3>")
                     snmp_status[what].append(server)
-                f.write(soutput)
+                f.write(html_report_template % (s_header, soutput))
                 f.close()
-        snmp_pages[what][server] = soutput
+        snmp_pages[what][server] = html_report_template % (s_header, soutput)
         
         goutput += "<tr><td><a href='%s/%s/%s.html'>%s</a></td><td>%s</td><td>%s</td></tr>" % (
             http_url,
@@ -727,12 +792,12 @@ def run_all(what):
         
     if not served_ourselves:
         with open("%s/%s/index.html" % (http_dir, what), "w") as f:
-            f.write(goutput)
+            f.write(html_output_template % ("<h2>Overall status for %s:</h2>" % what, goutput))
             f.close()
             
     snmp_pages[what]['index'] = html_output_template % ("<h2>Overall status for %s:</h2>" % what, goutput)
     
-    if runall[what]['contact']:
+    if runall[what]['contact'] and not dry_run:
         if 'email' in runall[what]['contact']:
             dt = time.strftime("%y-%m-%d")
             print("Constructing email for %s" % dt)
@@ -807,6 +872,7 @@ def start_server(portno):
     except KeyboardInterrupt:
         print "Ctrl+C received, shutting down HTTP Server"
         server.socket.close()
+        os.sys.exit(0)
 
 # Start doing things
 print("Starting dSNMP")
@@ -814,6 +880,10 @@ if (args.port and len(args.port)) == 1 or (http_port and http_port > 0):
     http_port = args.port[0] if (args.port and len(args.port)) > 0 else http_port
     thread = Thread(target = start_server, args = [http_port])
     thread.start()
+    
+if args.dry:
+    dry_run = True
+    print("Dry run enabled, won't alert of issues")
 
 # Our lil' timer for everything.
 a = 0
@@ -884,7 +954,11 @@ while True:
                         sendNotice(room, hipchat_token, "SNMP is currently running the following checks: %s" % output, 'green')
         except:
             print("Could not get hipchat data for %s (using https://api.hipchat.com/v1/rooms/history?auth_token=%s&room_id=%s&date=recent" % (group, hipchat_token, room))
-    time.sleep(6)
+    try:
+        time.sleep(6)
+    except SystemExit as err:
+        print("Shutting down dSNMP")
+        sys.exit(0)
     if (a % 150) == 1:
         for group in runall:
             thread = Thread(target = run_all, args = [group])
