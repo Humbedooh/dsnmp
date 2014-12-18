@@ -952,7 +952,10 @@ while True:
                     match = re.search(r"#snmp (\S+) (\S+)(.*)", line['message'])
                     if match:
                         if len(snmp_reading) > 0:
-                            sendNotice(room, hipchat_token, "Sorry, I'm currently running the 30 minute check. Due to the non-thread-safe nature of the UDP checks, I cannot return any SNMP data currently. Please retry in a minute.", 'yellow')
+                            add = ""
+                            if snmp_jobs[group]:
+                                add = " (%u%% done)" % snmp_jobs[group]
+                            sendNotice(room, hipchat_token, "Sorry, I'm currently running the 30 minute check%s. Due to the non-thread-safe nature of the UDP checks, I cannot return any SNMP data currently. Please retry in a minute." % add, 'yellow')
                         else:
                             host = match.group(1)
                             typ = match.group(2)
