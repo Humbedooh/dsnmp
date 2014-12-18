@@ -65,6 +65,7 @@ Checks are run every 15 minutes. If an issue is found, alerts will be provided t
  - `temperature`: Displays the overall temperature status. Triggers an alert if temperatures are outside acceptable range (71.4 C for ambient, intake & exhaust, 85.6 C for cpu, 52.4 C for drives)
  - `log`:         Displays the latest log entries from iDRAC. Does not trigger any alerts.
  - `diskinfo`:    Displays information about the disks in the machine. Does not trigger any alerts.
+ - `systimes`:    A long-lived query (20-30 seconds) that returns current system utilization. Should only be queried via HipChat, not as a standard check. Does not trigger alerts.
 
 
 ## Alert dial
