@@ -222,6 +222,8 @@ dell_extra_temp_names = "iso.3.6.1.4.1.674.10892.1.700.20.1.8.1"
 dell_log_dates = "iso.3.6.1.4.1.674.10892.1.300.40.1.8.1"
 dell_log_entries = "iso.3.6.1.4.1.674.10892.1.300.40.1.5.1"
 
+linux_cpu_times = ".1.3.6.1.4.1.2021.11"
+
 
 # Dell standard statuses
 dell_status = {
@@ -644,6 +646,34 @@ def analyze_dell_logs(arr, server, community):
             pass
     return "<b>Latest log entries:</b><br/>\n%s" % ("<br>\n".join(lines)), False
 
+def analyze_systimes(arr, server, community):
+    what = {
+        'User': 50,
+        'Nice': 51,
+        'System': 52,
+        'Idle': 53,
+        'IO Wait': 54,
+        'Kernel': 55
+    }
+    cores = get_max_cores(server, community)
+    orig = {}
+    new = {}
+    diff = 1
+    ts = 20
+    for el in what:
+        val = int(snmpget(server, community, "%s.%u.0" % (linux_cpu_times, what[el])))
+        orig[el] = val
+    time.sleep(ts)
+    output = ""
+    for el in what:
+        val = int(snmpget(server, community, "%s.%u.0" % (linux_cpu_times, what[el])))
+        new[el] = val
+        diff += val - orig[el]
+    for el in what:
+        cpu = (new[el] - orig[el]) / (diff/100)
+        output += "%s: %u%%<br/>\n" % (el, cpu)
+    return output, False
+        
 
 # Define MIB actions
 mibarray = {
@@ -664,7 +694,8 @@ mibarray = {
     'cooling': [dell_extra_coolin, analyze_dell_status],
     'battery': [dell_extra_battery, analyze_dell_status],
     'log': [linux_os, analyze_dell_logs],
-    'diskinfo': [dell_disk_status, analyze_disk_info]
+    'diskinfo': [dell_disk_status, analyze_disk_info],
+    'systimes': [linux_os, analyze_systimes, True]
 }
 
 
@@ -676,7 +707,7 @@ snmp_hourly_hipchat = {}
 snmp_hourly_pd = {}
 snmp_reading = []
 snmp_pages = {}
-
+snmp_jobs = {}
 
 # Schedule
 runall = {}
@@ -700,7 +731,7 @@ for group in runall:
     snmp_pages[group] = {}
 
 
-# 15 minute check:
+# 30 minute check:
 def run_all(what):
     print("Running checks for %s" % what)
     now = time.time()
@@ -709,6 +740,9 @@ def run_all(what):
     gtoutput = ""
     snmp_reading.append(what)
     snmp_status[what] = []
+    
+    if not 'index' in snmp_pages[what]:
+        snmp_pages[what]['index'] = "Building status page, please wait.."
     if 'hostsfile' in runall[what]:
         try:
             data = urllib.urlopen(runall[what]['hostsfile']).read()
@@ -719,6 +753,10 @@ def run_all(what):
         except Exception as err:
             print(err)
             pass
+    no_jobs = 0
+    jobs_done = 0
+    for server in sorted(runall[what]['hosts']):
+        no_jobs += len(runall[what]['hosts'][server]['checks'])
     for server in sorted(runall[what]['hosts']):
         soutput = ""
         sissues = False
@@ -735,8 +773,10 @@ def run_all(what):
                 raise Exception("bah")
         except:
             s_header = "<h2>%s (virtual machine):</h2>" % server
-        
+        s_header += "<p><i>Check run at %s.</i></p>" % time.strftime("%Y-%m-%d %H:%M")
         for el in runall[what]['hosts'][server]['checks']:
+            jobs_done += 1
+            snmp_jobs[what] = (jobs_done / (no_jobs * 1.0)) * 100
             dial = "%s-%s-%s" % (what, server, el)
             scans += 1
             try:
@@ -763,11 +803,14 @@ def run_all(what):
                     output += "<td><pre>%s</pre></td></tr>" % ", ".join(out)
                 soutput += output
             except:
+                soutput += "<td style='background:#FDD;'><pre>Could not contact SNMP Server!</pre></td></tr>"
                 if 'pd' in runall[what]['contact'] and not dry_run:
+                    whatissues.remove('snmp communication')
                     whatissues.append('snmp communication')
                     sissues = True
                     gissues += 1
-                    sendMail(runall[what]['contact']['pd'], "SNMP detected issues with %s on %s: Could not contact SNMPD" % (el, server), "SNMP detected issues with %s on %s: Could not contact SNMPD" % (el, server), "SNMP detected issues with %s on %s: Could not contact SNMPD" % (el, server))
+                    sendMail(runall[what]['contact']['pd'], "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server))
+                    break # Skip the other checks if we can't contact snmpd
         if not served_ourselves:
             with open("%s/%s/%s.html" % (http_dir, what, server), "w") as f:
                 if sissues:
@@ -854,6 +897,8 @@ class dsnmpHTTPHandler(BaseHTTPRequestHandler):
                 page = "index"
             if page and page in snmp_pages[group]:
                 self.wfile.write(snmp_pages[group][page])
+                if snmp_reading and snmp_jobs[group]:
+                    self.wfile.write("<p>Currently scanning hosts, %u%% done...</p>" % snmp_jobs[group])
             else:
                 self.wfile.write("404 Not found")
         else:
@@ -906,7 +951,7 @@ while True:
                     match = re.search(r"#snmp (\S+) (\S+)(.*)", line['message'])
                     if match:
                         if len(snmp_reading) > 0:
-                            sendNotice(room, hipchat_token, "Sorry, I'm currently running the 15 minute check. Due to the non-thread-safe nature of the UDP checks, I cannot return any SNMP data currently. Please retry in a minute.", 'yellow')
+                            sendNotice(room, hipchat_token, "Sorry, I'm currently running the 30 minute check. Due to the non-thread-safe nature of the UDP checks, I cannot return any SNMP data currently. Please retry in a minute.", 'yellow')
                         else:
                             host = match.group(1)
                             typ = match.group(2)
@@ -923,6 +968,8 @@ while True:
                                     output = "<b>SNMP Response:</b><br/>\n"
                                     gi = False
                                     if mibarray[typ].__class__.__name__ == "list":
+                                        if len(mibarray[typ]) > 2:
+                                            sendNotice(room, hipchat_token, "Doing long-lived query, please wait...", 'yellow')
                                         arr = snmpwalk("%s%s" % (host, suffix), community, mibarray[typ][0])
                                         response, issues = mibarray[typ][1](arr, "%s%s" % (host, suffix), community)
                                         output += response
@@ -959,7 +1006,7 @@ while True:
     except SystemExit as err:
         print("Shutting down dSNMP")
         sys.exit(0)
-    if (a % 150) == 1:
+    if (a % 300) == 2:
         for group in runall:
             thread = Thread(target = run_all, args = [group])
             thread.start()
