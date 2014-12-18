@@ -805,7 +805,8 @@ def run_all(what):
             except:
                 soutput += "<td style='background:#FDD;'><pre>Could not contact SNMP Server!</pre></td></tr>"
                 if 'pd' in runall[what]['contact'] and not dry_run:
-                    whatissues.remove('snmp communication')
+                    if 'snmp communication' in whatissues:
+                        whatissues.remove('snmp communication')
                     whatissues.append('snmp communication')
                     sissues = True
                     gissues += 1
