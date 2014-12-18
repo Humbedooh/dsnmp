@@ -229,7 +229,7 @@ html_report_template = """
     <title>dSNMP Status Page: %s</title>
   </head>
     <body>
-    <p><small><a href="../">Back to front page</a></small></p>
+    <p><small><a href="./">Back to front page</a></small></p>
         %s
         <table style="font-size: 11pt;">
           <thead>
