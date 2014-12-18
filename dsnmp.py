@@ -54,29 +54,83 @@ html_output_template = """
         font: 13px/1.5 Helvetica, Arial, 'Liberation Sans', FreeSans, sans-serif;
     }
      tr:nth-of-type(odd) td {
-        background-color: #DDDDE6;
+        background-color: #222;
      }
-    th {
-        background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 5%1%,#f6f6f6 100%%) !important;
-   }
-   td {
-    padding: 4px;
-   }
-    table {
-    border-collapse: collapse;
-    }
+     tr:nth-of-type(even) td {
+        background-color: #444;
+     }
     
-    table, th, td {
-        border: 1px solid black;
-    }
+   table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 350px;
+    box-shadow: 6px 6px 10px 3px rgba(0,0,0,0.75);
+    border-radius: 6px;
+    margin: 0px auto;
+    text-align: left;
+  }
+  table tr th,
+  table tr td {
+      border-right: 1px solid #bbb;
+      border-bottom: 1px solid #bbb;
+      padding: 5px;
+  }
+  table tr th:first-child,
+  table tr td:first-child {
+      border-left: 1px solid #bbb;
+  }
+  table tr th:first-child,
+  table tr td:first-child {
+      border-left: 1px solid #bbb;
+  }
+  table.Info tr th,
+  table.Info tr:first-child td
+  {
+      border-top: 1px solid #bbb;
+  }
 
+  table tr:first-child th:first-child,
+  table.Info tr:first-child td:first-child {
+      border-top-left-radius: 9px;
+  }
+  table tr:first-child th:last-child,
+  table.Info tr:first-child td:last-child {
+      border-top-right-radius: 9px;
+  }
+  table tr:last-child td:first-child {
+      border-bottom-left-radius: 9px;
+  }
+  table a {
+    color: #FF9;
+    font-weight: bolder;
+    text-decoration: none;
+  }
+
+  table tr:last-child td:last-child {
+      border-bottom-right-radius: 9px;
+      
+  }
+  table thead tr th {
+        background: linear-gradient(to bottom, #7c8587 0%%,#3f4344 49%%,#5c6360 50%%,#0a0e0a 51%%,#0a0809 100%%);
+        color: #6aF;
+        text-align: center;
+   }
+   table tbody tr td {
+      color: #FFF;
+      
+   }
+   body {
+    text-align: center;
+   }
     </style>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>dSNMP Status Page</title>
+  </head>
     <body>
         %s
-        <table style="font-size: 11pt; padding: 3px !important;">
+        <table style="font-size: 11pt;">
           <thead>
-            <tr style="background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 51%%,#f6f6f6 100%%);">
+            <tr>
               <th>Host</th>
               <th>Status</th>
               <th>Last checked</th>
@@ -102,29 +156,84 @@ html_report_template = """
         font: 13px/1.5 Helvetica, Arial, 'Liberation Sans', FreeSans, sans-serif;
     }
      tr:nth-of-type(odd) td {
-        background-color: #DDDDE6;
+        background-color: #222;
      }
-    th {
-        background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 5%1%,#f6f6f6 100%%) !important;
-   }
-   td {
-    padding: 5px;
-   }
-    table {
-    border-collapse: collapse;
-    }
+     tr:nth-of-type(even) td {
+        background-color: #444;
+     }
     
-    table, th, td {
-        border: 1px solid black;
-    }
+   table {
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 350px;
+    box-shadow: 6px 6px 10px 3px rgba(0,0,0,0.75);
+    border-radius: 6px;
+    margin: 0px auto;
+    text-align: left;
+  }
+  table tr th,
+  table tr td {
+      border-right: 1px solid #bbb;
+      border-bottom: 1px solid #bbb;
+      padding: 5px;
+  }
+  table tr th:first-child,
+  table tr td:first-child {
+      border-left: 1px solid #bbb;
+  }
+  table tr th:first-child,
+  table tr td:first-child {
+      border-left: 1px solid #bbb;
+  }
+  table.Info tr th,
+  table.Info tr:first-child td
+  {
+      border-top: 1px solid #bbb;
+  }
 
+  table tr:first-child th:first-child,
+  table.Info tr:first-child td:first-child {
+      border-top-left-radius: 9px;
+  }
+  table tr:first-child th:last-child,
+  table.Info tr:first-child td:last-child {
+      border-top-right-radius: 9px;
+  }
+  table tr:last-child td:first-child {
+      border-bottom-left-radius: 9px;
+  }
+  table a {
+    color: #FF9;
+    font-weight: bolder;
+    text-decoration: none;
+  }
+
+  table tr:last-child td:last-child {
+      border-bottom-right-radius: 9px;
+      
+  }
+  table thead tr th {
+        background: linear-gradient(to bottom, #7c8587 0%%,#3f4344 49%%,#5c6360 50%%,#0a0e0a 51%%,#0a0809 100%%);
+        color: #6aF;
+        text-align: center;
+   }
+   table tbody tr td {
+      color: #FFF;
+      
+   }
+   body {
+    text-align: center;
+   }
     </style>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>dSNMP Status Page: %s</title>
+  </head>
     <body>
+    <p><small><a href="../">Back to front page</a></small></p>
         %s
-        <table style="font-size: 11pt; padding: 3px !important;">
+        <table style="font-size: 11pt;">
           <thead>
-            <tr style="background: linear-gradient(to bottom, #ffffff 0%%,#f1f1f1 50%%,#e1e1e1 51%%,#f6f6f6 100%%);">
+            <tr>
               <th>Check</th>
               <th>Response</th>
             </tr>
@@ -817,9 +926,9 @@ def run_all(what):
                 if sissues:
                     f.write("<h3><font color='#995500'>Issues detected!! (see details below)</font></h3>")
                     snmp_status[what].append(server)
-                f.write(html_report_template % (s_header, soutput))
+                f.write(html_report_template % (server, s_header, soutput))
                 f.close()
-        snmp_pages[what][server] = html_report_template % (s_header, soutput)
+        snmp_pages[what][server] = html_report_template % (server, s_header, soutput)
         
         goutput += "<tr><td><a href='%s/%s/%s.html'>%s</a></td><td>%s</td><td>%s</td></tr>" % (
             http_url,
@@ -827,8 +936,8 @@ def run_all(what):
             server,
             server,
             (
-                    ("<font color='#920'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % ", ".join(whatissues)) if sissues else
-                    ("<font color='#008'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed)" % scans)
+                    ("<font color='#F62'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % ", ".join(whatissues)) if sissues else
+                    ("<font color='#4E4'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed)" % scans)
             ),
             time.strftime("%Y-%m-%d %H:%M")
         )
