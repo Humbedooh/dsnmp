@@ -22,6 +22,7 @@ As such, there may still be ASF-centric checks and logic in the code that you ma
 ## Command line options
 - `--port $port`: Serve up status pages from a small HTTP server off port $port (as opposed to using an existing web server)
 - `--dry-run`: Just run the scans and generate reports, but do not alert via HipChat, PagerDuty or email if issues are detected. Great for debugging.
+- `--daemonize`: Run dSNMP as a background daemon.
 
 ## Extending to dynamically added hosts ##
 If you don't like restarting the script to add new hosts/checks,
