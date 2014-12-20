@@ -1,16 +1,16 @@
 {
     "global_settings": {
         "html_dir": "/var/www",
-        
+
         "http_server": "internal",
         "http_port": 8080,
         "http_domain": "example.org",
-        
+
         "email_from": "dSNMP <no-reply@example.org",
         "email_addr": "no-reply@example.org",
-        
+
         "helper_suffix": ".example.org"
-        
+
     },
     "groups": {
         "dc_west": {
@@ -20,13 +20,13 @@
                     "type": "snmp",
                     "checks": ["space", "memfree", "disks", "psu", "load", "perc", "memory", "status"],
                     "community": "secret"
-                    },
+                },
                 "server2.example.org": {
                     "type": "snmp",
                     "checks": ["space", "memfree", "disks", "psu", "load", "perc", "memory", "status"],
                     "community": "secret"
-                    }
-                },
+                }
+            },
             "contact": {
                 "email": ["example@example.org"],
                 "pd": "dsnmp@example.pagerduty.com",
