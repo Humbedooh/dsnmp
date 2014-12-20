@@ -43,7 +43,7 @@ def start_analysis(group, config, dry_run, settings):
                 
             community = config['hosts'][server]['community']
             try:
-                prod = snmpget(server, community, dell_product_name)
+                prod = queue.queue(snmptools.get, server, community, oids.dell_machine_product_name)
                 if prod:
                     s_header = "<h2>%s (%s):</h2>" % (server, prod)
                 else:
