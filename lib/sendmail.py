@@ -1,3 +1,8 @@
+# SMTP Lib
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 # Sendmail function
 def sendMail(to, subject, text, html):
     msg = MIMEMultipart('alternative')

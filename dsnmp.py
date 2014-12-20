@@ -40,11 +40,6 @@ if len(path) == 0:
     path = "."
     
 
-# SMTP Lib
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
 # Threading
 from threading import Thread
 
