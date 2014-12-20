@@ -16,11 +16,8 @@ As such, there may still be ASF-centric checks and logic in the code that you ma
 
 ## Getting started ##
 - Download the script and sample configuration
-- Either set up a HTTP server of your choice on the box and:
-   - Set the config vars in dsnmp.py to match your system and HTTP server
-- OR, use `--port 8080` or similar as a CLI argument for the dsnmp script to start a HTTP server.
-- Fix settings.json to match your hardware
-- Run `nohup python dsnmp.py &` and have coffee!
+- Fix settings.json to match your hardware and http server configuration.
+- Run `python dsnmp.py --daemonize` and have coffee!
 
 ## Command line options
 - `--port $port`: Serve up status pages from a small HTTP server off port $port (as opposed to using an existing web server)
