@@ -179,7 +179,7 @@ def main(args):
                             pass
                         else:
                             hipchat.sendNotice(room, hipchat_token, "Sorry, I don't know that check type.", 'yellow')
-        if (a % 300) == 1:
+        if (a % 200) == 1:
             updateSettings()
             for group in settings['groups']:
                 logging.info("Starting thread to analyze '%s' group" % group)

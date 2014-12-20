@@ -1,4 +1,4 @@
-import snmptools, snmpanalyzers, hipchat, templates, oids, daemon
+import snmptools, snmpanalyzers, hipchat, templates, oids, daemon, sendmail
 from __main__ import queue, snmp_pages, snmp_jobs, snmp_daily_email, snmp_hourly_hipchat, snmp_status, alert_dials
 import logging, time, re
 from datetime import datetime
@@ -71,7 +71,7 @@ def start_analysis(group, config, dry_run, settings):
                             whatissues.append(el)
                             if (dial in alert_dials and alert_dials[dial] >= config['settings']['alertdial']) or config['settings']['alertdial'] <= 1:
                                 if 'pd' in config['contact'] and not dry_run:
-                                    sendMail(config['contact']['pd'], "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server))
+                                    sendmail.sendMail(config['contact']['pd'], "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server))
                             alert_dials[dial] = 1 if not dial in alert_dials else alert_dials[dial] + 1
                         elif dial in alert_dials:
                             del alert_dials[dial]
@@ -90,7 +90,7 @@ def start_analysis(group, config, dry_run, settings):
                         whatissues.append('snmp communication')
                         sissues = True
                         gissues += 1
-                        sendMail(config['contact']['pd'], "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server))
+                        sendmail.sendMail(config['contact']['pd'], "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server))
                         break # Skip the other checks if we can't contact snmpd
                     
         if not served_ourselves:
@@ -127,20 +127,20 @@ def start_analysis(group, config, dry_run, settings):
     
     # Sum up and deploy status messages
     dt = time.strftime("%y-%m-%d")
-    if config['contact'] and not dry_run:
-        if 'email' in config['contact']:
+    if 'contact' in config:
+        if 'email' in config['contact'] and not dry_run:
             print("Constructing email for %s" % dt)
-            if dt != snmp_daily_email[group] and not dry_run:
+            if dt != snmp_daily_email[group]:
                 snmp_daily_email[group] = dt
                 for email in config['contact']['email']:
                     subject = "Daily SNMP Check: %s" % ("ISSUES DETECTED (%u)" % gissues if gissues > 0 else "No issues detected")
                     text = "Hello, this is the daily SNMP check. Current SNMP status is:\n - No issues have been detected for today, hoorah!\n\nDetails:\n\n" + gtoutput
-                    html = html_output_template % ("Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>No issues have been detected today, awesome!</i></b>.<br/><br/><b>Details:</b><br/>", goutput)
+                    html = templates.html_output_template % ("Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>No issues have been detected today, awesome!</i></b>.<br/><br/><b>Details:</b><br/>", goutput)
                     if gissues > 0:
                         text = "Hello, this is the daily SNMP check. Current SNMP status is:\n - ISSUES DETECTED\n\nDetails:\n\n" + gtoutput
-                        html = html_output_template % ("Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>ISSUES DETECTED!</i></b>.<br/><br/><b>Details:</b><br/>", goutput)
+                        html = templates.html_output_template % ("Hello, this is the daily SNMP check. Current SNMP status is: <br/><b><i>ISSUES DETECTED!</i></b>.<br/><br/><b>Details:</b><br/>", goutput)
                     text += "\nFor more details, visit: %s/%s.\nPowered by dSNMP - https://github.com/Humbedooh/dsnmp" % (http_url, group)
-                    sendMail(email, subject, text, html)
+                    sendmail.sendMail(email, subject, text, html)
     
         if 'hipchat' in config['contact']:
             h = datetime.now().hour / 4
@@ -150,10 +150,11 @@ def start_analysis(group, config, dry_run, settings):
                 message = "SNMP Update: %s. See the <a href='%s/%s/'>status page</a> for more details." % ("Issues detected with %s" % ", ".join(snmp_status[group]), http_url, group) if gissues > 0 else "Daily eight o'clock status: No issues detected"
                 color = 'red' if gissues else 'green'
                 if datetime.now().hour == 20 or gissues > 0:
-                    hipchat.sendNotice(room, hipchat_token, message, color)
+                    hipchat.sendNotice(config['contact']['hipchat']['room'], config['contact']['hipchat']['token'], message, color)
     
     snmp_daily_email[group] = dt
 
     # All done!
+    print("Done deploying.")
     logging.info("Done with %s in %u seconds" % (group, time.time() - now))
     
