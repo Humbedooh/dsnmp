@@ -127,7 +127,7 @@ def start_analysis(group, config, dry_run, settings):
     
     # Sum up and deploy status messages
     dt = time.strftime("%y-%m-%d")
-    if 'contact' in config:
+    if 'contact' in config and not dry_run:
         if 'email' in config['contact']:
             print("Constructing email for %s" % dt)
             if dt != snmp_daily_email[group]:
