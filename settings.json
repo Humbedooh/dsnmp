@@ -1,25 +1,43 @@
 {
-    "ourstuff": {
-        "hosts": {
-          "server1.example.org": {
-          "checks": ["space", "memfree"],
-          "community": "secret"
-          },
-          "server2.example.org": {
-              "checks": ["space", "memfree", "load", "psu", "memory", "disks"],
-              "community": "secret"
-          }
-        },
-        "contact": {
-            "email": ["foo@example.org"],
-            "pd": "pagerduty-thingy@foo.pagerduty.com",
-            "hipchat": {
-                "token": "Add your token here, or use '<foo.txt' to read it from foo.txt",
-                "room": "room id goes here"
+    "global_settings": {
+        "html_dir": "/var/www",
+        
+        "http_server": "internal",
+        "http_port": 8080,
+        "http_domain": "example.org",
+        
+        "email_from": "dSNMP <no-reply@example.org",
+        "email_addr": "no-reply@example.org",
+        
+        "helper_suffix": ".example.org"
+        
+    },
+    "groups": {
+        "dc_west": {
+            "vital_partitions": ["/", "/x1/?.*"],
+            "hosts": {
+                "server1.example.org": {
+                    "type": "snmp",
+                    "checks": ["space", "memfree", "disks", "psu", "load", "perc", "memory", "status"],
+                    "community": "secret"
+                    },
+                "server2.example.org": {
+                    "type": "snmp",
+                    "checks": ["space", "memfree", "disks", "psu", "load", "perc", "memory", "status"],
+                    "community": "secret"
+                    }
+                },
+            "contact": {
+                "email": ["example@example.org"],
+                "pd": "dsnmp@example.pagerduty.com",
+                "hipchat": {
+                    "token": "<hipchattoken.txt",
+                    "room": "snmp"
+                }
+            },
+            "settings": {
+                "alertdial": 2
             }
-        },
-        "settings": {
-            "alertdial": 2
         }
     }
 }
