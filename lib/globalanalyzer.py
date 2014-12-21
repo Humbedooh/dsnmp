@@ -64,7 +64,7 @@ def start_analysis(group, config, dry_run, settings):
                     if snmpanalyzers.mibarray[el].__class__.__name__ == "list":
                         arr = queue.queue(snmptools.walk, server, community, snmpanalyzers.mibarray[el][0])
                         response, issues = snmpanalyzers.mibarray[el][1](arr, server, community, config)
-                        output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FDD; color: #000;'" if issues else ""),response)
+                        output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FCA; color: #000;'" if issues else ""),response)
                         if issues:
                             sissues = True
                             gissues += 1
@@ -83,7 +83,7 @@ def start_analysis(group, config, dry_run, settings):
                         output += "<td><pre>%s</pre></td></tr>" % ", ".join(out)
                     soutput += output
                 except Exception as err:
-                    soutput += "<td style='background:#FDD; color: #000;'><pre>Could not contact SNMP Server: %s</pre></td></tr>" % err
+                    soutput += "<td style='background:#FCA; color: #000;'><pre>Could not contact SNMP Server: %s</pre></td></tr>" % err
                     if 'pd' in config['contact'] and not dry_run:
                         if 'snmp communication' in whatissues:
                             whatissues.remove('snmp communication')
@@ -97,10 +97,11 @@ def start_analysis(group, config, dry_run, settings):
             with open("%s/%s/%s.html" % (http_dir, group, server), "w") as f:
                 if sissues:
                     f.write("<h3><font color='#995500'>Issues detected!! (see details below)</font></h3>")
-                    snmp_status[group].append(server)
                 f.write(templates.html_report_template % (server, s_header, soutput))
                 f.close()
         snmp_pages[group][server] = templates.html_report_template % (server, s_header, soutput)
+        if sissues:
+            snmp_status[group].append(server)
         
         goutput += "<tr><td><a href='%s/%s/%s.html'>%s</a></td><td>%s</td><td>%s</td></tr>" % (
             http_url,
