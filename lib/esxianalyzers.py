@@ -113,6 +113,18 @@ def analyze_array(arr):
             output += "Error(s) detected: %s<br/>\n" % instance[u'ErrorDescription']
     return output, issue
 
+def analyze_disks(arr):
+    issue = False
+    output = "Disk status:<br/>\n"
+    
+    for instance in arr:
+        space = int(instance[u'NumberOfBlocks']) * int(instance[u'BlockSize']) / (1024*1024*1024)
+        output += "- %s (%s GB allocated)<br/>\n" % (instance[u'Caption'], space)
+        if u'ErrorDescription' in instance and instance[u'ErrorDescription']:
+            issue = True
+            output += "Error(s) detected: %s<br/>\n" % instance[u'ErrorDescription']
+    return output, issue
+
 mibarray = {
     'temperature': ["CIM_NumericSensor", analyze_fans],
     'cores': ["CIM_Processor", analyze_cores],
@@ -120,7 +132,8 @@ mibarray = {
     'prod': ["CIM_Chassis", analyze_prod],
     'psu': ["OMC_PowerSupply", analyze_psu],
     'array': ["VMware_StorageVolume", analyze_array],
-    'raid': ["VMware_Controller", analyze_raid]
+    'raid': ["VMware_Controller", analyze_raid],
+    'disks': ["VMware_StorageExtent", analyze_disks]
 }
 
 if __name__ == "__main__":

@@ -76,6 +76,7 @@ Checks are run every 15 minutes. If an issue is found, alerts will be provided t
  - `raid`:        Displays the status of the RAID controller and its volumes. Alerts if a volume is degraded or otherwise compromised
  - `cores`:       Lists the number of CPU cores found on the system. Does not trigger alerts
  - `memory`:      Displays the amount of installed memory, and if a dimm is faulted, also triggers an alert.
+ - `disks`:       Displays the state of each disk in the machine. Alerts if a disk is not online or passthrough.
  
 
 ## Alert dial
