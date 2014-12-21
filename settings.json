@@ -25,6 +25,14 @@
                     "type": "snmp",
                     "checks": ["space", "memfree", "disks", "psu", "load", "perc", "memory", "status"],
                     "community": "secret"
+                },
+                "server3.example.org": {
+                    "type": "wbem",
+                    "checks": ["psu", "memory", "array", "raid"],
+                    "wbem" : {
+                        "user": "wbemuser",
+                        "password": "let-me-in"
+                    }
                 }
             },
             "contact": {
