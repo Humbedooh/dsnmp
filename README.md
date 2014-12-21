@@ -73,6 +73,7 @@ Checks are run every 15 minutes. If an issue is found, alerts will be provided t
  - `array`:       Displays the status of the OS arrays. Alerts if a disk is in a wrong state (degraded, faulted, offline etc)
  - `raid`:        Displays the status of the RAID controller and its volumes. Alerts if a volume is degraded or otherwise compromised
  - `cores`:       Lists the number of CPU cores found on the system. Does not trigger alerts
+ - `memory`:      Displays the amount of installed memory, and if a dimm is faulted, also triggers an alert.
  
 
 ## Alert dial
