@@ -172,11 +172,11 @@ def main(args):
                             if len(snmpanalyzers.mibarray[checktype]) > 2:
                                 hipchat.sendNotice(room, hipchat_token, "Doing long-lived query, please wait...", 'gray')
                             print(arr)
-                            if arr:
+                            try:
                                 response, issues = snmpanalyzers.mibarray[checktype][1](arr, server, community, settings['groups'][group])
                                 hipchat.sendNotice(room, hipchat_token, response, 'red' if issues else 'green')
-                            else:
-                                hipchat.sendNotice(room, hipchat_token, "No SNMP output returned from server", 'red')
+                            except:
+                                hipchat.sendNotice(room, hipchat_token, "No SNMP output returned from server. Please make sure that the address is correct, SNMPd is running and that no firewall or security setups are blocking data transmission.", 'red')
                         elif checktype in snmpanalyzers.mibarray:
                             pass
                         else:
