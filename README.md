@@ -95,3 +95,7 @@ To prevent overzealous reporting, the `alertdial` setting in settings.json contr
  To get an overall status of the latest run of checks, type: `#snmpstatus`
  
 
+# Using without HipChat or PagerDuty:
+
+It is possible to use dSNMP without HipChat or PagerDuty integration, and just have web/email features.
+To do so, simply remove the `hipchat` or `pd` entries in `settings.json`.
