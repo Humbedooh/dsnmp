@@ -24,7 +24,7 @@ snmp_hourly_hipchat = {}
 snmp_hourly_pd = {}
 
 # Local imports
-from lib import templates, oids, sendmail, hipchat, snmptools, snmpanalyzers, globalanalyzer, http
+from lib import templates, oids, sendmail, hipchat, snmptools, snmpanalyzers, globalanalyzer, http, esxianalyzers
 
 
 # Set up path and logging
@@ -155,6 +155,11 @@ def main(args):
                         for check in snmpanalyzers.mibarray:
                             checks.append(check)                        
                         hipchat.sendNotice(room, hipchat_token, "Usage: #snmp $host $check [$community]<br/>\nAvailable checks: %s" % ", ".join(checks))
+                    elif el[0] == "wbemhelp":
+                        checks = []
+                        for check in esxianalyzers.mibarray:
+                            checks.append(check)                        
+                        hipchat.sendNotice(room, hipchat_token, "Usage: #wbem $host $check<br/>\nAvailable checks: %s" % ", ".join(checks))
                     elif el[0] == "check" and len(el) > 2:
                         server = el[1]
                         if not re.match(r"([^.]+\.[^.]+\.[^.]+)", el[1]):
@@ -177,6 +182,29 @@ def main(args):
                             except:
                                 hipchat.sendNotice(room, hipchat_token, "No SNMP output returned from server. Please make sure that the address is correct, SNMPd is running and that no firewall or security setups are blocking data transmission.", 'red')
                         elif checktype in snmpanalyzers.mibarray:
+                            pass
+                        else:
+                            hipchat.sendNotice(room, hipchat_token, "Sorry, I don't know that check type.", 'yellow')
+                    elif el[0] == "wbem" and len(el) > 2:
+                        server = el[1]
+                        if not re.match(r"([^.]+\.[^.]+\.[^.]+)", el[1]):
+                            server = "%s%s" % (el[1], settings['global_settings']['helper_suffix'])
+                        checktype = el[2]
+                        if checktype in esxianalyzers.mibarray and esxianalyzers.mibarray[checktype].__class__.__name__ == "list":
+                            conf = settings['groups'][group]
+                            host = settings['groups'][group]['hosts'][server] if server in settings['groups'][group]['hosts'] else None
+                            if host and 'wbem' in host:
+                                conf = host
+                            try:
+                                arr = esxianalyzers.init(server, esxianalyzers.mibarray[checktype][0], conf)
+                                try:
+                                    response, issues = esxianalyzers.mibarray[checktype][1](arr)
+                                    hipchat.sendNotice(room, hipchat_token, response, 'red' if issues else 'green')
+                                except:
+                                    raise Exception("No output")
+                            except:
+                                hipchat.sendNotice(room, hipchat_token, "No WBEM output returned from server. Please make sure that the address is correct, WBEM is running and that no firewall or security setups are blocking data transmission.", 'red')
+                        elif checktype in esxi.mibarray:
                             pass
                         else:
                             hipchat.sendNotice(room, hipchat_token, "Sorry, I don't know that check type.", 'yellow')

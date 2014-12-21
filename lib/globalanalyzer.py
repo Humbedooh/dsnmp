@@ -1,4 +1,4 @@
-import snmptools, snmpanalyzers, hipchat, templates, oids, daemon, sendmail
+import snmptools, snmpanalyzers, hipchat, templates, oids, daemon, sendmail, esxianalyzers
 from __main__ import queue, snmp_pages, snmp_jobs, snmp_daily_email, snmp_hourly_hipchat, snmp_status, alert_dials
 import logging, time, re
 from datetime import datetime
@@ -30,6 +30,7 @@ def start_analysis(group, config, dry_run, settings):
         
     # Run through all jobs
     for server in sorted(config['hosts']):
+        print("Checking %s" % server)
         soutput = ""
         sissues = False
         whatissues = []
@@ -92,7 +93,58 @@ def start_analysis(group, config, dry_run, settings):
                         gissues += 1
                         sendmail.sendMail(config['contact']['pd'], "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server), settings)
                         break # Skip the other checks if we can't contact snmpd
-                    
+        elif 'type' in config['hosts'][server] and config['hosts'][server]['type'] == "wbem":
+            conf = config
+            host = config['hosts'][server] if server in config['hosts'] else None
+            if host and 'wbem' in host:
+                conf = config['hosts'][server]
+            try:
+                prod = queue.queue(esxianalyzers.init, server, "CIM_Chassis", conf)
+                if prod:
+                    prod = prod[0][u'Model']
+                    s_header = "<h2>%s (%s):</h2>" % (server, prod)
+                else:
+                    raise Exception("bah")
+            except:
+                s_header = "<h2>%s (virtual machine):</h2>" % server
+                
+            s_header += "<p><i>Check run at %s.</i></p>" % time.strftime("%Y-%m-%d %H:%M")
+            for el in config['hosts'][server]['checks']:
+                jobs_done += 1
+                snmp_jobs[group] = (jobs_done / (no_jobs * 1.0)) * 100
+                dial = "%s-%s-%s" % (group, server, el)
+                scans += 1
+                try:
+                    output = "<tr><td><b>%s check:</b></td>" % el
+                    if esxianalyzers.mibarray[el].__class__.__name__ == "list":
+                        arr = queue.queue(esxianalyzers.init, server, esxianalyzers.mibarray[el][0], conf)
+                        response, issues = esxianalyzers.mibarray[el][1](arr)
+                        output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FCA; color: #000;'" if issues else ""),response)
+                        if issues:
+                            sissues = True
+                            gissues += 1
+                            whatissues.append(el)
+                            if (dial in alert_dials and alert_dials[dial] >= config['settings']['alertdial']) or config['settings']['alertdial'] <= 1:
+                                if 'pd' in config['contact'] and not dry_run:
+                                    sendmail.sendMail(config['contact']['pd'], "WBEM detected issues with %s on %s" % (el, server), "WBEM detected issues with %s on %s" % (el, server), "WBEM detected issues with %s on %s" % (el, server), settings)
+                            alert_dials[dial] = 1 if not dial in alert_dials else alert_dials[dial] + 1
+                        elif dial in alert_dials:
+                            del alert_dials[dial]
+                    else:                            
+                        pass
+                    soutput += output
+                except Exception as err:
+                    soutput += "<td style='background:#FCA; color: #000;'><pre>Could not contact WBEM Server: %s</pre></td></tr>" % err
+                    if 'pd' in config['contact'] and not dry_run:
+                        if 'snmp communication' in whatissues:
+                            whatissues.remove('wbem communication')
+                        whatissues.append('wbem communication')
+                        sissues = True
+                        gissues += 1
+                        sendmail.sendMail(config['contact']['pd'], "WBEM detected issues with %s: Could not contact WBEM" % (server), "WBEM detected issues with %s: Could not contact WBEM" % (server), "WBEM detected issues with %s: Could not contact WBEM" % (server), settings)
+                        break # Skip the other checks if we can't contact wbem
+        
+        
         if not served_ourselves:
             with open("%s/%s/%s.html" % (http_dir, group, server), "w") as f:
                 if sissues:

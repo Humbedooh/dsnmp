@@ -41,12 +41,19 @@ def scanHipChat(group, config, firstRun = False):
                         if len(com) > 1:
                             community = com.strip()
                         ret.append(['check', host, typ, community])
+                    match = re.match(r"#wbem (\S+) (\S+)(.*)", line['message'])
+                    if match and line['from']['name'] != u'SNMP2HipChat':
+                        host = match.group(1)
+                        typ = match.group(2)
+                        ret.append(['wbem', host, typ])
                     if line['message'] == "#snmpstatus":
                         ret.append(['status'])
                     if line['message'] == "#snmpconf":
                         ret.append(['config'])
                     if line['message'] == "#snmphelp" or line['message'] == "#snmp help":
                         ret.append(['help'])
+                    if line['message'] == "#wbemhelp" or line['message'] == "#wbem help":
+                        ret.append(['wbemhelp'])
         except Exception as err:
             print("Could not get hipchat data for %s (using https://api.hipchat.com/v1/rooms/history?auth_token=%s&room_id=%s&date=recent): %s" % (group, hipchat_token, room, err))
         
