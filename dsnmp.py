@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 # DSNMP: Dell SNMP monitoring system
 # Licensed under the Apache License v/2.0
-# Joint copyright 2014, Quokka IvS.
-# Joint copyright 2014, The Apache Software Foundation
+# See COPYRIGHT for copyright notices
 # Source: https://github.com/Humbedooh/dsnmp
 
 # Basic imports
