@@ -1,7 +1,7 @@
 dSNMP - Dell SNMP monitoring system
 =====
 
-This is a Dell (OpenManage) SNMP monitoring system with HipChat, PagerDuty and email integration.
+This is a Dell (OpenManage) SNMP/WBEM monitoring system with HipChat, PagerDuty and email integration.
 It also works with generic UNIX net-snmp daemons for more standard checks such as space, free mem and load averages.
 
 Tested with Dell PowerEdge R410, R515 and R720 with PERC RAID controllers, as well as Linux and FreeBSD VMs with net-snmp.
@@ -13,6 +13,7 @@ As such, there may still be ASF-centric checks and logic in the code that you ma
 - Python 2.7 or newer (will work with 2.6, barely)
 - Access to SNMP servers via SNMP v2c
 - snmp tools installed (snmpget + snmpwalk)
+- pywbem (`pip install pywbem`)
 
 ## Getting started ##
 - Download the script and sample configuration
@@ -38,7 +39,7 @@ If you do this, please leave the `hosts` record as a blank hash:
 ## Checks ##
 Checks are run every 15 minutes. If an issue is found, alerts will be provided through HipChat, PagerDuty and email on a regular basis (HipChat every 4 hours or at 8 PM if no issues, PagerDuty when issues are detected (depending on what the alert dial is set to, email once a day).
 
-### The following standard UNIX checks are valid:
+### The following standard UNIX SNMP checks are valid:
 
  - `load`:        5, 10, 15 min load averages (alerts if 15 min is above what N cores can provide for. Triggers after 45 min of this)
  - `cpuidle`:     Shows how much cpu is idle at the time. Does not trigger alerts
@@ -49,7 +50,7 @@ Checks are run every 15 minutes. If an issue is found, alerts will be provided t
  - `space`:       Lists the available partitions on the disk if >= 75% space used. Triggers an alert if >=75% space used on a partition.
  
  
-### The following Dell specific checks are valid:
+### The following Dell specific SNMP checks are valid:
  
  - `perc`:        Displays the status of the PERC RAID controller and its volumes. Alerts if a volume is degraded or otherwise compromised
  - `array`:       Displays the status of the OS arrays. Alerts if a disk is in a wrong state (degraded, faulted, offline etc)
@@ -65,6 +66,14 @@ Checks are run every 15 minutes. If an issue is found, alerts will be provided t
  - `diskinfo`:    Displays information about the disks in the machine. Does not trigger any alerts.
  - `systimes`:    A long-lived query (20-30 seconds) that returns current system utilization. Should only be queried via HipChat, not as a standard check. Does not trigger alerts.
 
+### The following WBEM specific checks are valid:
+
+ - `temperature`: Displays the overall temperature status. Triggers an alert if temperatures are outside acceptable range (71.4 C for ambient, intake & exhaust, 85.6 C for cpu, 52.4 C for drives)
+ - `psu`:         Displays the status of the Power Supply Unit. Alerts if PSU is in a bad state.
+ - `array`:       Displays the status of the OS arrays. Alerts if a disk is in a wrong state (degraded, faulted, offline etc)
+ - `raid`:        Displays the status of the RAID controller and its volumes. Alerts if a volume is degraded or otherwise compromised
+ - `cores`:       Lists the number of CPU cores found on the system. Does not trigger alerts
+ 
 
 ## Alert dial
 To prevent overzealous reporting, the `alertdial` setting in settings.json controls when alerts are sent out. For each increment of 1 of the dial, dsnmp will wait one more turn (15 min) before alerting, or put differently; if the same error has been detected more than $alertdial times, the alert will be triggered. The default setting for this is 2, meaning an alert will trigger if the issue persists for 30-45 minutes.
@@ -74,9 +83,12 @@ To prevent overzealous reporting, the `alertdial` setting in settings.json contr
  `#snmp $host $check [$community]`.
  For example: `#snmp server1 disks`. 
  
+ To use WBEM commands, use `#wbem $host $check`.
+ 
+ To list all available check types use either `#snmp help` or `#wbem help`.
+ 
  If the specific host is in your settings.json file (or in the remote hosts file), you do not need to specify an SNMP community, but if it's not, then you will need to specify it as the third and last arg to the command. The `suffix` variable inside snmp.py is automatically appended to the host name, thus `server1` becomes `server1.example.com` unless you change the suffix (you can leave it blank).
  
  To get an overall status of the latest run of checks, type: `#snmpstatus`
  
- To get list of all checks currently in use, type: `#snmpconfig`
- 
+
