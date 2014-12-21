@@ -151,8 +151,15 @@ def main(args):
                             hipchat.sendNotice(room, hipchat_token, "No issues were detected on the last run.", 'green')
                     elif el[0] == "config":
                         hipchat.sendNotice(room, hipchat_token, "bla bla bla")
+                    elif el[0] == "help":
+                        checks = []
+                        for check in snmpanalyzers.mibarray:
+                            checks.append(check)                        
+                        hipchat.sendNotice(room, hipchat_token, "Usage: #snmp $host $check [$community]<br/>\nAvailable checks: %s" % ", ".join(checks))
                     elif el[0] == "check" and len(el) > 2:
-                        server = "%s%s" % (el[1], settings['global_settings']['helper_suffix'])
+                        server = el[1]
+                        if not re.match(r"([^.]+\.[^.]+\.[^.]+)", el[1]):
+                            server = "%s%s" % (el[1], settings['global_settings']['helper_suffix'])
                         checktype = el[2]
                         community = "public"
                         if len(el) > 3 and el[3]:

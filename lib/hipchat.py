@@ -32,8 +32,8 @@ def scanHipChat(group, config, firstRun = False):
                 hash256 = line['date'] + hashlib.sha256(line['message'].encode("ascii","ignore")).hexdigest()
                 if not hash256 in hipchat_archive[group]:
                     hipchat_archive[group][hash256] = True
-                    match = re.search(r"#snmp (\S+) (\S+)(.*)", line['message'])
-                    if match:
+                    match = re.match(r"#snmp (\S+) (\S+)(.*)", line['message'])
+                    if match and line['from']['name'] != u'SNMP2HipChat':
                         community = None
                         host = match.group(1)
                         typ = match.group(2)
@@ -45,6 +45,8 @@ def scanHipChat(group, config, firstRun = False):
                         ret.append(['status'])
                     if line['message'] == "#snmpconf":
                         ret.append(['config'])
+                    if line['message'] == "#snmphelp" or line['message'] == "#snmp help":
+                        ret.append(['help'])
         except Exception as err:
             print("Could not get hipchat data for %s (using https://api.hipchat.com/v1/rooms/history?auth_token=%s&room_id=%s&date=recent): %s" % (group, hipchat_token, room, err))
         

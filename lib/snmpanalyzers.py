@@ -272,7 +272,7 @@ def analyze_prod(arr, server, community, config):
     
 def analyze_dell_logs(arr, server, community, config):
     lines = []
-    for i in range(1, 9):
+    for i in range(1, 12):
         try:
             line = queue.queue(snmptools.get, server, community, "%s.%u" % (oids.dell_log_entries, i))
             date = queue.queue(snmptools.get, server, community, "%s.%u" % (oids.dell_log_dates, i))
