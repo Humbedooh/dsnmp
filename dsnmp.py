@@ -112,7 +112,7 @@ for group in settings['groups']:
 # Start doing things
 def main(args):
     print("Starting dSNMP")
-    if (args.port and len(args.port)) == 1 or (settings['global_settings']['http_port'] and settings['global_settings']['http_port'] > 0):
+    if (args.port and len(args.port)) == 1 or (settings['global_settings']['http_server'] == "internal" and settings['global_settings']['http_port'] > 0):
         http_port = args.port[0] if (args.port and len(args.port)) > 0 else settings['global_settings']['http_port']
         thread = Thread(target = http.start_server, args = [http_port])
         thread.start()
