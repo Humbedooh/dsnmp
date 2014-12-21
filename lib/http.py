@@ -29,7 +29,10 @@ class dsnmpHTTPHandler(BaseHTTPRequestHandler):
                 else:
                     self.wfile.write(templates.html_temp_template)
             else:
-                self.wfile.write("404 Not found!")
+                self.wfile.write("<h2>dSNMP main page</h2><ul>")
+                for group in snmp_pages:
+                    self.wfile.write("<li><a href='/%s/'>%s</a></li>" % (group, group))
+                self.wfile.write("</ul>")
         except Exception as err:
             pass
 
