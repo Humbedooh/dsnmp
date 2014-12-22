@@ -3,14 +3,19 @@ from SocketServer import ThreadingMixIn
 import re
 from __main__ import snmp_pages, snmp_jobs
 import templates
+import base64
 
 # Spawn our own HTTP server?
 class dsnmpHTTPHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         try:
             self.send_response(200)
-            self.send_header('Content-type',"text/html")
+            
             self.send_header('Connection',"close")
+            if self.path == "/favicon.ico":
+                self.send_header('Content-type',"image/x-icon")
+            else:
+                self.send_header('Content-type',"text/html")
             self.end_headers()
             data = ""
             m = re.match(r"^/([^/]*)/?([^/]*?)(\.html)?$", self.path)
@@ -27,7 +32,10 @@ class dsnmpHTTPHandler(BaseHTTPRequestHandler):
                     if group in snmp_jobs and snmp_jobs[group] < 100:
                         self.wfile.write("<p>Currently scanning hosts, %u%% done...</p>" % snmp_jobs[group])
                 else:
+                    
                     self.wfile.write(templates.html_temp_template)
+            elif self.path == "/favicon.ico":
+                self.wfile.write(base64.decodestring(templates.favicon))
             else:
                 self.wfile.write("<h2>dSNMP main page</h2><ul>")
                 for group in snmp_pages:
