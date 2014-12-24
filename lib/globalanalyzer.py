@@ -161,8 +161,8 @@ def start_analysis(group, config, dry_run, settings):
             server,
             server,
             (
-                    ("<font color='#F62'><b>&#10060; &nbsp;</b>Issues detected in: %s</font>" % ", ".join(whatissues)) if sissues else
-                    ("<font color='#4E4'><b>&#10003; &nbsp;</b></font>No issues detected (all %u scans passed)" % scans)
+                    ("<span class='checkbox_bad'></span><span class='bad'> Issues detected in: %s</span>" % ", ".join(whatissues)) if sissues else
+                    ("<span class='checkbox_good'></span> No issues detected (all %u scans passed)" % scans)
             ),
             time.strftime("%Y-%m-%d %H:%M")
         )

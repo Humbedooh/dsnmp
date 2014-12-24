@@ -178,6 +178,34 @@ html_output_template = """
       color: #FFF;
       
    }
+   .checkbox_good {
+        border: 1px solid #6A2;
+        border-radius: 10px;
+        background: linear-gradient(to bottom, #9dd53a 0%%,#a1d54f 50%%,#80c217 51%%,#7cbc0a 100%%);
+        color: #FFF;
+        font-weight: bold;
+        padding-left: 4px;
+        padding-right: 4px;
+   }
+   .checkbox_good:before {
+    content: "\\2713"
+   }
+   .checkbox_bad {
+        border: 1px solid #B52;
+        border-radius: 10px;
+        background: linear-gradient(to bottom, #f85032 0%%,#f16f5c 50%%,#f6290c 51%%,#f02f17 71%%,#e73827 100%%);
+        color: #FFF;
+        font-weight: bold;
+        padding-left: 4px;
+        padding-right: 4px;
+        margin-right: 8px;
+   }
+   .checkbox_bad:before {
+    content: "\\2717"
+   }
+   .bad {
+    color: #E50; font-weight: bold;
+   }
    body {
     text-align: center;
    }
