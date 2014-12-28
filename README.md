@@ -1,10 +1,8 @@
-<p style="text-align: center !important;">
-  <img src="dsnmp_logo.png"/><br/>
-  <h2>dSNMP - Dell SNMP/WBEM monitoring system</h2>
-</p>
+![dSNMP logo](dsnmp_logo.png)
 
+dSNMP - Dell SNMP/WBEM monitoring system
+########################################
 
-=====
 
 ![Example HTML output](snmp_example.png)
 
