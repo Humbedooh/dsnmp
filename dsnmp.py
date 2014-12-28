@@ -22,6 +22,7 @@ snmp_status = {}
 snmp_daily_email = {}
 snmp_hourly_hipchat = {}
 snmp_hourly_pd = {}
+snmp_json = {}
 
 # Local imports
 from lib import templates, oids, sendmail, hipchat, snmptools, snmpanalyzers, globalanalyzer, http, esxianalyzers
@@ -105,7 +106,7 @@ for group in settings['groups']:
     snmp_hourly_hipchat[group] = "",
     snmp_hourly_pd[group] = ""
     snmp_pages[group] = {}
-
+    snmp_json[group] = {}
 
 
     
