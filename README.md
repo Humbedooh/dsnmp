@@ -1,6 +1,4 @@
 ![dSNMP logo](dsnmp_logo.png)
-
-==============================================
 ## dSNMP - Dell SNMP/WBEM monitoring system ##
 ==============================================
 
