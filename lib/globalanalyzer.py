@@ -1,5 +1,5 @@
 import snmptools, snmpanalyzers, hipchat, templates, oids, daemon, sendmail, esxianalyzers
-from __main__ import queue, snmp_pages, snmp_jobs, snmp_daily_email, snmp_hourly_hipchat, snmp_status, alert_dials
+from __main__ import queue, snmp_pages, snmp_jobs, snmp_daily_email, snmp_hourly_hipchat, snmp_status, alert_dials, snmp_json
 import logging, time, re
 from datetime import datetime
 
@@ -38,7 +38,13 @@ def start_analysis(group, config, dry_run, settings):
         
         prod = None
         s_header = ""
-        
+        js = {
+            'host': server,
+            'type': 'snmp' if not 'type' in config['hosts'][server] or config['hosts'][server]['type'] == "snmp" else 'wbem',
+            'started': time.time(),
+            'checkno': len(config['hosts'][server]['checks']) if 'checks' in config['hosts'][server] else 0,
+            'checks': []
+        }
         # SNMP Checks??
         if not 'type' in config['hosts'][server] or config['hosts'][server]['type'] == "snmp":
                 
@@ -60,15 +66,20 @@ def start_analysis(group, config, dry_run, settings):
                 snmp_jobs[group] = (jobs_done / (no_jobs * 1.0)) * 100
                 dial = "%s-%s-%s" % (group, server, el)
                 scans += 1
+                checkWorked = True
+                checkOutput = None
+                now = time.time()
                 try:
                     output = "<tr><td><b>%s check:</b></td>" % el
                     if snmpanalyzers.mibarray[el].__class__.__name__ == "list":
                         arr = queue.queue(snmptools.walk, server, community, snmpanalyzers.mibarray[el][0])
                         response, issues = snmpanalyzers.mibarray[el][1](arr, server, community, config)
                         output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FCA; color: #000;'" if issues else ""),response)
+                        checkOutput = response
                         if issues:
                             sissues = True
                             gissues += 1
+                            checkWorked = False
                             whatissues.append(el)
                             if (dial in alert_dials and alert_dials[dial] >= config['settings']['alertdial']) or config['settings']['alertdial'] <= 1:
                                 if 'pd' in config['contact'] and not dry_run:
@@ -93,6 +104,13 @@ def start_analysis(group, config, dry_run, settings):
                         gissues += 1
                         sendmail.sendMail(config['contact']['pd'], "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server), "SNMP detected issues with %s: Could not contact SNMPD" % (server), settings)
                         break # Skip the other checks if we can't contact snmpd
+                js['checks'].append({
+                    'type': el,
+                    'issues': False if checkWorked else True,
+                    'response': checkOutput,
+                    'started': now,
+                    'finished': time.time()
+                })
         elif 'type' in config['hosts'][server] and config['hosts'][server]['type'] == "wbem":
             conf = config
             host = config['hosts'][server] if server in config['hosts'] else None
@@ -114,15 +132,20 @@ def start_analysis(group, config, dry_run, settings):
                 snmp_jobs[group] = (jobs_done / (no_jobs * 1.0)) * 100
                 dial = "%s-%s-%s" % (group, server, el)
                 scans += 1
+                checkWorked = True
+                checkOutput = None
+                now = time.time()
                 try:
                     output = "<tr><td><b>%s check:</b></td>" % el
                     if esxianalyzers.mibarray[el].__class__.__name__ == "list":
                         arr = queue.queue(esxianalyzers.init, server, esxianalyzers.mibarray[el][0], conf)
                         response, issues = esxianalyzers.mibarray[el][1](arr)
                         output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FCA; color: #000;'" if issues else ""),response)
+                        checkOutput = response
                         if issues:
                             sissues = True
                             gissues += 1
+                            checkWorked = False
                             whatissues.append(el)
                             if (dial in alert_dials and alert_dials[dial] >= config['settings']['alertdial']) or config['settings']['alertdial'] <= 1:
                                 if 'pd' in config['contact'] and not dry_run:
@@ -142,9 +165,22 @@ def start_analysis(group, config, dry_run, settings):
                         sissues = True
                         gissues += 1
                         sendmail.sendMail(config['contact']['pd'], "WBEM detected issues with %s: Could not contact WBEM" % (server), "WBEM detected issues with %s: Could not contact WBEM" % (server), "WBEM detected issues with %s: Could not contact WBEM" % (server), settings)
+                        js['checks'].append({
+                            'type': el,
+                            'issues': False if checkWorked else True,
+                            'response': "Could not contact WBEM",
+                            'started': now,
+                            'finished': time.time()
+                        })
                         break # Skip the other checks if we can't contact wbem
-        
-        
+                js['checks'].append({
+                    'type': el,
+                    'issues': False if checkWorked else True,
+                    'response': checkOutput,
+                    'started': now,
+                    'finished': time.time()
+                })
+        snmp_json[group][server] = js
         if not served_ourselves:
             with open("%s/%s/%s.html" % (http_dir, group, server), "w") as f:
                 if sissues:
