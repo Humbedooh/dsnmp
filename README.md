@@ -1,7 +1,8 @@
 ![dSNMP logo](dsnmp_logo.png)
 
-dSNMP - Dell SNMP/WBEM monitoring system
-########################################
+==============================================
+## dSNMP - Dell SNMP/WBEM monitoring system ##
+==============================================
 
 
 ![Example HTML output](snmp_example.png)
