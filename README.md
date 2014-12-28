@@ -1,9 +1,10 @@
 ![dSNMP logo](dsnmp_logo.png)
 ## dSNMP - Dell SNMP/WBEM monitoring system ##
-==============================================
 
 
 ![Example HTML output](snmp_example.png)
+
+============================================
 
 This is a Dell (OpenManage) SNMP/WBEM monitoring system with HipChat, PagerDuty and email integration.
 It also works with generic UNIX net-snmp daemons for more standard checks such as space, free mem and load averages.
