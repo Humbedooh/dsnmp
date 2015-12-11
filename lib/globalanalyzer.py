@@ -46,7 +46,7 @@ def start_analysis(group, config, dry_run, settings):
             'checks': []
         }
         # SNMP Checks??
-        if not 'type' in config['hosts'][server] or config['hosts'][server]['type'] == "snmp":
+        if not 'type' in config['hosts'][server] or config['hosts'][server]['type'] == "snmp" and 'community' in config['hosts'][server]:
                 
             community = config['hosts'][server]['community']
             try:
