@@ -48,7 +48,7 @@ def start_analysis(group, config, dry_run, settings):
         # SNMP Checks??
         if not 'type' in config['hosts'][server] or config['hosts'][server]['type'] == "snmp":
                 
-            community = config['hosts'][server]['community']
+            community = config['hosts'][server]['community'] if 'community' in config['hosts'][server] else "anonymous"
             try:
                 prod = queue.queue(snmptools.get, server, community, oids.dell_machine_product_name)
                 if prod:
