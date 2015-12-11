@@ -237,7 +237,7 @@ def analyze_cpu_cores(arr, server, community, config):
     return output, False
 
 def get_max_cores(server, community, config):
-    cores = 0
+    cores = 2
     output = ""
     try:
         for el in queue.queue(snmptools.walk, server, community, oids.dell_cpu_cores):
