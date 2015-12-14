@@ -259,7 +259,7 @@ def get_max_cores(server, community, config):
     except:
         for el in queue.queue(snmptools.walk, server, community, oids.unix_cpu_number_of_cores):
             hw = el[1]
-            if re.search(r"CPU", hw, flags = re.IGNORECASE):
+            if re.search(r"(CPU|Processor)", hw, flags = re.IGNORECASE):
                 cores += 2
         return cores
         
