@@ -251,6 +251,8 @@ def get_max_cores(server, community, config):
                     hw = el[1]
                     if re.search(r"(CPU|Processor)", hw):
                         cores += 1
+                if cores > 0:
+                    return cores
             except:
                 pass
         if cores == 0:
