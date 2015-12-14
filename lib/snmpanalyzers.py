@@ -245,7 +245,17 @@ def get_max_cores(server, community, config):
         if cores > 0:
             return cores
         else:
+            try:
+                arr = queue.queue(snmptools.walk, server, community, oids.dell_cpu_names)
+                for el in arr:
+                    hw = el[1]
+                    if re.search(r"(CPU|Processor)", hw):
+                        cores += 1
+            except:
+                pass
+        if cores == 0:
             raise Exception("Not a Dell machine!")
+            
     except:
         for el in queue.queue(snmptools.walk, server, community, oids.unix_cpu_number_of_cores):
             hw = el[1]
