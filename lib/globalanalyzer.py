@@ -70,30 +70,33 @@ def start_analysis(group, config, dry_run, settings):
                 checkOutput = None
                 now = time.time()
                 try:
-                    output = "<tr><td><b>%s check:</b></td>" % el
-                    if snmpanalyzers.mibarray[el].__class__.__name__ == "list":
-                        arr = queue.queue(snmptools.walk, server, community, snmpanalyzers.mibarray[el][0])
-                        response, issues = snmpanalyzers.mibarray[el][1](arr, server, community, config)
-                        output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FCA; color: #000;'" if issues else ""),response)
-                        checkOutput = response
-                        if issues:
-                            sissues = True
-                            gissues += 1
-                            checkWorked = False
-                            whatissues.append(el)
-                            if (dial in alert_dials and alert_dials[dial] >= config['settings']['alertdial']) or config['settings']['alertdial'] <= 1:
-                                if 'pd' in config['contact'] and not dry_run:
-                                    sendmail.sendMail(config['contact']['pd'], "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server), settings)
-                            alert_dials[dial] = 1 if not dial in alert_dials else alert_dials[dial] + 1
-                        elif dial in alert_dials:
-                            del alert_dials[dial]
-                    else:                            
-                        arr = queue.queue(snmptools.walk, server, community, snmpanalyzers.mibarray[el])
-                        out = []
-                        for item in arr:
-                            out.append("%s = %s" % (item[0], item[1]))
-                        output += "<td><pre>%s</pre></td></tr>" % ", ".join(out)
-                    soutput += output
+                    if el in snmpanalyzers.mibarray:
+                        output = "<tr><td><b>%s check:</b></td>" % el
+                        if snmpanalyzers.mibarray[el].__class__.__name__ == "list":
+                            arr = queue.queue(snmptools.walk, server, community, snmpanalyzers.mibarray[el][0])
+                            response, issues = snmpanalyzers.mibarray[el][1](arr, server, community, config)
+                            output += "<td %s><pre>%s</pre></td></tr>" % (("style='background:#FCA; color: #000;'" if issues else ""),response)
+                            checkOutput = response
+                            if issues:
+                                sissues = True
+                                gissues += 1
+                                checkWorked = False
+                                whatissues.append(el)
+                                if (dial in alert_dials and alert_dials[dial] >= config['settings']['alertdial']) or config['settings']['alertdial'] <= 1:
+                                    if 'pd' in config['contact'] and not dry_run:
+                                        sendmail.sendMail(config['contact']['pd'], "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server), "SNMP detected issues with %s on %s" % (el, server), settings)
+                                alert_dials[dial] = 1 if not dial in alert_dials else alert_dials[dial] + 1
+                            elif dial in alert_dials:
+                                del alert_dials[dial]
+                        else:                            
+                            arr = queue.queue(snmptools.walk, server, community, snmpanalyzers.mibarray[el])
+                            out = []
+                            for item in arr:
+                                out.append("%s = %s" % (item[0], item[1]))
+                            output += "<td><pre>%s</pre></td></tr>" % ", ".join(out)
+                        soutput += output
+                    else:
+                        raise Exception("Unknown check: %s" % el)
                 except Exception as err:
                     soutput += "<td style='background:#FCA; color: #000;'><pre>Could not contact SNMP Server: %s</pre></td></tr>" % err
                     if 'pd' in config['contact'] and not dry_run:
