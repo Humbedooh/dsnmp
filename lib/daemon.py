@@ -25,6 +25,7 @@ class Queue:
 	"""
 	def __init__(self):
 		self.lock = Lock()
+		self.locks = {}
 	
 	def queue(self, command, *args):
 		check = inspect.getargspec(command)
@@ -36,15 +37,20 @@ class Queue:
 		if len(args) >= len(check[0]):
 			args = args[:len(check[0])] # Resize arg list if needed
 			ret = None
+			server = args[0]
 			self.lock.acquire()
+			if not server in self.locks:
+				self.locks[server] = Lock()
+			self.lock.release()
 			
+			self.locks[server].acquire()
 			# Run in an enclosure, so as to be able to release lock if it fails
 			try:
 				ret = command(*args)
 			except Exception as err:
 				logging.warn("Queue command returned error: %s" % err)
-				
-			self.lock.release()
+			self.locks[server].release()
+			
 			if ret:
 				return ret
 		return None
