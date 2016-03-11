@@ -17,13 +17,15 @@ def linux_disk_space_used(arr, server, community, config):
         used = queue.queue(snmptools.get, server, community, "%s.%u" % (oids.unix_disk_pct, el[0]))
         if int(used) > lu:
             lv = el[1]
-            lu = used
+            lu = int(used)
         if int(used) >= 75:
             output += "%s: %s%% used (alert level = 75%%).<br/>" % (el[1], str(used))
             overuse = True
             for path in vital_partitions:
                 if re.search(r"^%s$" % path, el[1]) or el[1] == path:
                     woveruse = True
+        else:
+            output += "%s: %s%% used.<br/>" % (el[1], str(used))
     if not overuse:
         output += "No partitions using >= 75%% disk space (largest is %s with %s%%)" % (lv, lu)
     return output, woveruse
