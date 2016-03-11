@@ -5,11 +5,14 @@ import re
 # SMMP Walk + Get
 def walk(server, community, oid):
     try:
-        output = subprocess.check_output(["snmpwalk", "-Os", "-c", community, "-v", "2c", server, oid])
-        print(output)
-        assert(len(output) > 20)
-    except:
-        output = subprocess.check_output(["snmpwalk", "-Os", "-c", "secret", "-v", "2c", server, oid])
+        try:
+            output = subprocess.check_output(["snmpwalk", "-t", "10", "-Os", "-c", community, "-v", "2c", server, oid])
+            print(output)
+            assert(len(output) > 20)
+        except:
+            output = subprocess.check_output(["snmpwalk", "-t", "10", "-Os", "-c", "secret", "-v", "2c", server, oid])
+    except subprocess.CalledProcessError as err:
+        output = ""
     arr = []
     for line in str(output).split("\n"):
         match = re.search(r"\w+\.(\d+) = (\w+): (.+)", line)
