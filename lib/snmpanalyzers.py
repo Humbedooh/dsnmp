@@ -204,7 +204,7 @@ def analyze_dell_overall_status(arr, server, community, config):
             except:
                 pass
         if len(bads) == 0:
-            bads.append("Non-standard error, please check your OpenManage service for details")
+            return "Unknown global status error: Possible firmware version issue. Please check your OpenManage service for details", False
         return "Issues detected with: %s" % (", ".join(bads)), True
     return "All systems okay", False
 
