@@ -228,7 +228,7 @@ def analyze_cpu_cores(arr, server, community, config):
         pass
     for el in arr:
         hw = el[1]
-        if re.search(r"(CPU|Processor)", hw):
+        if re.search(r"(CPU|Processor|GenuineIntel)", hw):
             cpus.append(hw)
             load = queue.queue(snmptools.get, server, community, "%s.%s" % (oids.unix_cpu_core_load, el[0]))
             if not load:
@@ -239,7 +239,7 @@ def analyze_cpu_cores(arr, server, community, config):
     return output, False
 
 def get_max_cores(server, community, config):
-    cores = 2
+    cores = 0
     output = ""
     try:
         for el in queue.queue(snmptools.walk, server, community, oids.dell_cpu_cores):
@@ -261,10 +261,11 @@ def get_max_cores(server, community, config):
             raise Exception("Not a Dell machine!")
             
     except:
+        # VM? Just report cores as is, they're usually HT cores
         for el in queue.queue(snmptools.walk, server, community, oids.unix_cpu_number_of_cores):
             hw = el[1]
-            if re.search(r"(CPU|Processor)", hw, flags = re.IGNORECASE):
-                cores += 2
+            if re.search(r"(CPU|Processor|GenuineIntel)", hw):
+                cores += 1
         return cores
         
 def analyze_prod(arr, server, community, config):
