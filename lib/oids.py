@@ -11,6 +11,7 @@ unix_cpu_idle = ".1.3.6.1.4.1.2021.11.11.0"
 unix_cpu_number_of_cores = ".1.3.6.1.2.1.25.3.2.1.3"
 unix_cpu_core_load = ".1.3.6.1.2.1.25.3.3.1.2"
 unix_cpu_systimes = ".1.3.6.1.4.1.2021.11"
+unix_mdadm_raid_status = ".1.3.6.1.4.1.2021.13.18.100.0"
 
 ## Memory statistics
 unix_memory_free = ".1.3.6.1.4.1.2021.4.11.0"
