@@ -251,7 +251,7 @@ def get_max_cores(server, community, config):
                 arr = queue.queue(snmptools.walk, server, community, oids.dell_cpu_names)
                 for el in arr:
                     hw = el[1]
-                    if re.search(r"(CPU|Processor)", hw):
+                    if re.search(r"(CPU|Processor|GenuineIntel)", hw):
                         cores += 1
                 if cores > 0:
                     return cores
