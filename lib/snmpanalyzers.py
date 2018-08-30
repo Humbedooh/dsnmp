@@ -71,6 +71,13 @@ def get_mem_free(arr, server, community, config):
         output = "%.2f GB free (%.2f GB buffered)" % (gb, gbb)
     return output, issue
 
+def analyze_mdadm_raid(arr, server, community, config):
+     rv = int(queue.queue(snmptools.get, server, community, oids.unix_mdadm_raid_status))
+     if rv != 0:
+        return "MDAdm software RAID errors detected, consult /proc/mdstat for further details!", True
+     return "No issues detected with software RAID assemblies on this machine", False
+    
+    
 def analyze_total_mem(arr, server, community, config):
     buffers = queue.queue(snmptools.get, server, community, oids.unix_memory_used)
     
@@ -347,6 +354,7 @@ mibarray = {
     'battery': [oids.dell_machine_batteries, analyze_dell_status],
     'log': [oids.unix_os, analyze_dell_logs],
     'diskinfo': [oids.dell_disk_status, analyze_disk_info],
-    'systimes': [oids.unix_os, analyze_systimes, True]
+    'systimes': [oids.unix_os, analyze_systimes, True],
+    'swraid': [oids.unix_mdadm_raid_status, analyze_mdadm_raid],
 }
 
