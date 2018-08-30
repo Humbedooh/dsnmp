@@ -30,7 +30,7 @@ def init(server, mib, config):
 def connect(server, user, password):
     server = "https://%s" % server
     try:
-        wbemclient = pywbem.WBEMConnection(server, (user,password), NS)
+        wbemclient = pywbem.WBEMConnection(server, (user,password), NS, no_verification = True)
         return wbemclient
     except Exception as err:
         logging.warn("Could not connect to WBEM: %s" % err)
